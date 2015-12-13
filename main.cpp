@@ -177,6 +177,8 @@ int main(int argc, char** argv)
 
     // Vertices et coordonnées
     float vertices[] = {-0.5, -0.5,   0.0, 0.5,   0.5, -0.5};
+
+#if 0
     GLuint shaderProgram = loadShaderProgram("Shaders/shading.vert", "Shaders/shading.frag");
     glBindAttribLocation(shaderProgram, 0, "position"); 
     glBindAttribLocation(shaderProgram, 1, "normalIn");
@@ -189,7 +191,7 @@ int main(int argc, char** argv)
     glBindAttribLocation(simpleShaderProgram, 0, "position");
     glBindFragDataLocation(simpleShaderProgram, 0, "fragmentColor");
     linkShaderProgram(simpleShaderProgram);
-    
+#endif
     // Main loop
     while(!terminer)
     {
