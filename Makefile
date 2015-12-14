@@ -1,7 +1,7 @@
 .RECIPEPREFIX = >
 
 CXX=g++
-CXXFLAGS= -Wall
+CXXFLAGS= -Wall -std=c++11
 SDL = -lSDL2 -lGL
 GLEW = -lGLEW 
 EXEC=program

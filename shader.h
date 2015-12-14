@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <sstream>
 #include <string>
 #include <map>
 #include <GL/glew.h>
@@ -21,12 +22,12 @@ class shader
 {
 public:
     shader(std::string filename);
-    void init(std::map<int, std::string>* attr, std::map<int, std::string>* fragData);
+    void init(std::map<int, std::string>& attr, std::map<int, std::string>& fragData);
 private :
     std::string filename;
     GLuint program;
-    void bindAttrib( std::map<int, std::string>* attrib );
-    void bindFragData( std::map<int, std::string>* fragData );
+    void bindAttrib( std::map<int, std::string>& attrib );
+    void bindFragData( std::map<int, std::string>& fragData );
     void linkShaderProgram();
     GLuint loadShaderProgram( const std::string& vertex, const std::string& fragment);
 };

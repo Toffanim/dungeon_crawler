@@ -6,6 +6,7 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 #include "game.h"
+using namespace std;
 
 game::game()
 {
@@ -80,6 +81,12 @@ int game::init()
 
 int game::mainLoop()
 {
+    shader* s = new shader( "Shaders/shading" );
+    map<int, string> attr{{0, "position"}, {1, "normalIn"}, {2, "texCoordIn"}};
+    map<int, string> fragData{{0, "fragmentColor"}};
+    s->init( attr, fragData );
+
+    
     // Main loop
     while(!endgame)
     {

@@ -13,14 +13,18 @@ shader::shader(string filename):filename(filename)
 
 }
 
-void shader::init(map<int, string>* attr, map<int, string>* fragData)
+void shader::init(map<int, string>& attr, map<int, string>& fragData)
 {
-    string vertex = filename + ".vert";
-    string fragment = filename + ".frag";
-    program = loadShaderProgram(vertex, fragment);
-    bindAttrib(attr );
-    bindFragData(fragData);
-    linkShaderProgram();
+    //string vertex = filename + ".vert";
+    ostringstream os;
+    os << filename << ".vert";
+    ostringstream os2;
+    os2 << filename << ".frag";
+    
+    program = loadShaderProgram(os.str(), os2.str());
+    //bindAttrib(attr);
+    //bindFragData(fragData);
+    //linkShaderProgram();
 }
 
 
@@ -28,6 +32,9 @@ GLuint shader::loadShaderProgram(const std::string &vertexShader, const std::str
 {
     GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    cout << vertexShader << fragmentShader;
+
 
     const char *vs = utils::textFileRead(vertexShader.c_str());
     const char *fs = utils::textFileRead(fragmentShader.c_str());
@@ -37,7 +44,7 @@ GLuint shader::loadShaderProgram(const std::string &vertexShader, const std::str
     // text data is not needed beyond this point
     delete [] vs;
     delete [] fs;
-
+ 
     glCompileShader(vShader);
     int compileOk = 0;
     glGetShaderiv(vShader, GL_COMPILE_STATUS, &compileOk);
@@ -60,8 +67,8 @@ GLuint shader::loadShaderProgram(const std::string &vertexShader, const std::str
     glDeleteShader( fShader );
     glAttachShader(shaderProgram, vShader);
     glDeleteShader( vShader );
-
-    return shaderProgram; 
+    
+    return (shaderProgram);
 }
 
 
@@ -78,22 +85,22 @@ void shader::linkShaderProgram()
 }
 
 
-void shader::bindAttrib( std::map<int, std::string>* attrib )
+void shader::bindAttrib( std::map<int, std::string>& attrib )
 {
     map<int, string>::iterator it;
-    for (it = attrib->begin();
-         it != attrib->end();
+    for (it = attrib.begin();
+         it != attrib.end();
          ++it)
     {
         glBindAttribLocation( program, it->first, it->second.c_str());
     }
 }
 
-void shader::bindFragData(std::map<int, std::string>* fragData )
+void shader::bindFragData(std::map<int, std::string>& fragData )
 {
     map<int, string>::iterator it;
-    for (it = fragData->begin();
-         it != fragData->end();
+    for (it = fragData.begin();
+         it != fragData.end();
          ++it)
     {
         glBindFragDataLocation( program, it->first, it->second.c_str());
