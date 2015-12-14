@@ -1,0 +1,13 @@
+#Moteur
+
+-Implémenter fonction pour load un mesh et le render (Assimp, DevIL pour les textures)
+-Implémenter une caméra
+-Implémenter un player
+-Implémenter des mobs
+-Implémenter de l'eau
+
+#Gameplay
+
+-Implémenter la lecture du terrain
+-Implémenter une AI basique pour les mobs
+-Implémenter un coffre

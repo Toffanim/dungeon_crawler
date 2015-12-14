@@ -6,6 +6,14 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 #include "game.h"
+#include "glm/vec3.hpp"
+#include <IL/il.h>
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+
 using namespace std;
 
 game::game()
@@ -86,6 +94,7 @@ int game::mainLoop()
     map<int, string> fragData{{0, "fragmentColor"}};
     s->init( attr, fragData );
 
+    glm::vec3 v = glm::vec3(0.0f, 0.0f, 0.0f);
     
     // Main loop
     while(!endgame)
