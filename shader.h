@@ -10,16 +10,23 @@
 #define SHADER_H
 #endif
 
+#include <iostream>
+#include <stdio.h>
+#include <string>
+#include <map>
+#include <GL/glew.h>
+#include "utils.h"
+
 class shader
 {
 public:
-    shader();
-    void init();
+    shader(std::string filename);
+    void init(std::map<int, std::string>* attr, std::map<int, std::string>* fragData);
 private :
     std::string filename;
     GLuint program;
-    void bindAttrib( map attrib );
-    void bindFragData( map fragData );
+    void bindAttrib( std::map<int, std::string>* attrib );
+    void bindFragData( std::map<int, std::string>* fragData );
     void linkShaderProgram();
-    void loadShaderProgram( const string& vertex, const string& fragment);
+    GLuint loadShaderProgram( const std::string& vertex, const std::string& fragment);
 };

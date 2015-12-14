@@ -9,9 +9,10 @@
 
 #define UTILS_H
 #endif
+#include <stdlib.h>
+#include <stdio.h>
 
-static class utils
+namespace utils
 {
-public:
-    static const char* textFileRead( const char *fn );
+    const char* textFileRead( const char *fn );
 }

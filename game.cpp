@@ -9,10 +9,26 @@
 
 game::game()
 {
-
 }
 
-void game::init()
+
+void game::startupGLDiagnostics()
+{
+    // print diagnostic information
+    printf( "GL  VENDOR: %s\n", glGetString( GL_VENDOR ) );
+    printf( "   VERSION: %s\n", glGetString( GL_VERSION ) );
+    printf( "  RENDERER: %s\n", glGetString( GL_RENDERER ) );
+
+    // test if we've got GL 3.0
+    if( !GLEW_VERSION_3_0 )
+    {
+        printf( "OpenGL 3.0 not supported.\n" 
+            "Please update your drivers and/or buy a better graphics card."
+        );
+    }
+}
+
+int game::init()
 {
     // SDL Init
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -56,7 +72,7 @@ void game::init()
     }
 
     startupGLDiagnostics();
-
+    
     // Vertices et coordonnées
     float vertices[] = {-0.5, -0.5,   0.0, 0.5,   0.5, -0.5};
     return(0);
@@ -77,7 +93,7 @@ int game::mainLoop()
     }
 
     // Deaalowing and cleaning app
-    SDL_DestroyWindow(fenetre);
+    SDL_DestroyWindow(window);
     SDL_Quit();
     return(0);
 }

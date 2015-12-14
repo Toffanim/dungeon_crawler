@@ -5,7 +5,10 @@
    $Creator: Casey Muratori $
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
+#include "utils.h"
 
+namespace utils {
+    
 const char *textFileRead( const char *fn )
 {
     /* Note: the `fatalError' thing is a bit of a hack, The proper course of
@@ -50,4 +53,5 @@ const char *textFileRead( const char *fn )
     }
 
     return content;
+}
 }

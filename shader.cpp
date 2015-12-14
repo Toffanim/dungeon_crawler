@@ -6,30 +6,31 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 #include "shader.h"
+using namespace std;
 
 shader::shader(string filename):filename(filename)
 {
 
 }
 
-void shader::init()
+void shader::init(map<int, string>* attr, map<int, string>* fragData)
 {
     string vertex = filename + ".vert";
     string fragment = filename + ".frag";
     program = loadShaderProgram(vertex, fragment);
-    bindAttrib( /*map*/ );
-    bindFragData( /*map*/ );
+    bindAttrib(attr );
+    bindFragData(fragData);
     linkShaderProgram();
 }
 
 
-GLuint loadShaderProgram(const std::string &vertexShader, const std::string &fragmentShader)
+GLuint shader::loadShaderProgram(const std::string &vertexShader, const std::string &fragmentShader)
 {
     GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    const char *vs = textFileRead(vertexShader.c_str());
-    const char *fs = textFileRead(fragmentShader.c_str());
+    const char *vs = utils::textFileRead(vertexShader.c_str());
+    const char *fs = utils::textFileRead(fragmentShader.c_str());
 
     glShaderSource(vShader, 1, &vs, NULL);
     glShaderSource(fShader, 1, &fs, NULL);
@@ -64,7 +65,7 @@ GLuint loadShaderProgram(const std::string &vertexShader, const std::string &fra
 }
 
 
-void linkShaderProgram()
+void shader::linkShaderProgram()
 {
     glLinkProgram(program);
     GLint linkOk = 0;
@@ -77,24 +78,24 @@ void linkShaderProgram()
 }
 
 
-void bindAttrib( map attrib)
+void shader::bindAttrib( std::map<int, std::string>* attrib )
 {
-    //TODO(marc): make map works to have map[nb]=strings
-    for (int i = 0;
-         i < attrib.size();
-         ++i)
+    map<int, string>::iterator it;
+    for (it = attrib->begin();
+         it != attrib->end();
+         ++it)
     {
-        glBindAttribLocation( program, map[i], map[i]);
+        glBindAttribLocation( program, it->first, it->second.c_str());
     }
 }
 
-void bindFragData( map fragData )
+void shader::bindFragData(std::map<int, std::string>* fragData )
 {
-//TODO(marc) : make map works
-    for (int i = 0;
-         i < fragData.size();
-         ++i)
+    map<int, string>::iterator it;
+    for (it = fragData->begin();
+         it != fragData->end();
+         ++it)
     {
-        glBindFragDataLocation( program, map[i], map[i]);
+        glBindFragDataLocation( program, it->first, it->second.c_str());
     }
 }

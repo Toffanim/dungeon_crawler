@@ -10,15 +10,23 @@
 #define GAME_H
 #endif
 
+#include <stdlib.h>
+#include <iostream>
+#include <SDL2/SDL.h>
+#include <GL/glew.h>
+#include "shader.h"
+
 class game
 {
 public :
     game();
-    void init();
+    int init();
     int mainLoop();
 private :
-    SDL_Window* window(0);
-    SDL_GLContext openGLcontext(0);
+    SDL_Window* window;
+    SDL_GLContext openGLcontext;
     SDL_Event events;
     bool endgame;
-}
+
+    void startupGLDiagnostics();
+};
