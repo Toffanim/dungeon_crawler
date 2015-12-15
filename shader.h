@@ -8,7 +8,6 @@
    ======================================================================== */
 
 #define SHADER_H
-#endif
 
 #include <iostream>
 #include <stdio.h>
@@ -23,6 +22,7 @@ class shader
 public:
     shader(std::string filename);
     void init(std::map<int, std::string>& attr, std::map<int, std::string>& fragData);
+    GLuint getProgram() { return(program); }
 private :
     std::string filename;
     GLuint program;
@@ -31,3 +31,5 @@ private :
     void linkShaderProgram();
     GLuint loadShaderProgram( const std::string& vertex, const std::string& fragment);
 };
+
+#endif

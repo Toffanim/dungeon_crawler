@@ -22,9 +22,9 @@ void shader::init(map<int, string>& attr, map<int, string>& fragData)
     os2 << filename << ".frag";
     
     program = loadShaderProgram(os.str(), os2.str());
-    //bindAttrib(attr);
-    //bindFragData(fragData);
-    //linkShaderProgram();
+    bindAttrib(attr);
+    bindFragData(fragData);
+    linkShaderProgram();
 }
 
 
@@ -32,9 +32,6 @@ GLuint shader::loadShaderProgram(const std::string &vertexShader, const std::str
 {
     GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    cout << vertexShader << fragmentShader;
-
 
     const char *vs = utils::textFileRead(vertexShader.c_str());
     const char *fs = utils::textFileRead(fragmentShader.c_str());
@@ -50,7 +47,7 @@ GLuint shader::loadShaderProgram(const std::string &vertexShader, const std::str
     glGetShaderiv(vShader, GL_COMPILE_STATUS, &compileOk);
     if (!compileOk) 
     {
-        printf("Compile shader error");
+        printf("Compile vertex shader error");
         return 0;
     }
 
@@ -58,7 +55,7 @@ GLuint shader::loadShaderProgram(const std::string &vertexShader, const std::str
     glGetShaderiv(fShader, GL_COMPILE_STATUS, &compileOk);
     if (!compileOk) 
     {
-        printf("Compile shader error");
+        printf("Compile frag shader error");
         return 0;
     }
 

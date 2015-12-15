@@ -8,11 +8,17 @@
    ======================================================================== */
 
 #define UTILS_H
-#endif
+
 #include <stdlib.h>
 #include <stdio.h>
+#include <string>
+#include <GL/glew.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 namespace utils
 {
     const char* textFileRead( const char *fn );
-}
+    GLuint TextureFromFile( const char* path, std::string directory);
+};
+#endif

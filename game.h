@@ -8,13 +8,12 @@
    ======================================================================== */
 
 #define GAME_H
-#endif
 
 #include <stdlib.h>
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include "shader.h"
+#include "mesh.h"
 
 class game
 {
@@ -30,3 +29,5 @@ private :
 
     void startupGLDiagnostics();
 };
+
+#endif

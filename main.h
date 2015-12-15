@@ -8,10 +8,11 @@
    ======================================================================== */
 
 #define MAIN_H
-#endif
 
 #include <stdlib.h>
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include "game.h"
+
+#endif

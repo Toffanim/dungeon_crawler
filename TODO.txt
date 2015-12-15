@@ -11,3 +11,7 @@
 -Implémenter la lecture du terrain
 -Implémenter une AI basique pour les mobs
 -Implémenter un coffre
+
+
+
+-vérifier que le endif des pragma once est bien a la fin du header

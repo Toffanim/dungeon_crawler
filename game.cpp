@@ -6,12 +6,7 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 #include "game.h"
-#include "glm/vec3.hpp"
-#include <IL/il.h>
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 
 using namespace std;
@@ -89,12 +84,21 @@ int game::init()
 
 int game::mainLoop()
 {
-    shader* s = new shader( "Shaders/shading" );
-    map<int, string> attr{{0, "position"}, {1, "normalIn"}, {2, "texCoordIn"}};
-    map<int, string> fragData{{0, "fragmentColor"}};
+    shader* s = new shader( "Shaders/simple" );
+    map<int, string> attr;
+    map<int, string> fragData;
     s->init( attr, fragData );
 
-    glm::vec3 v = glm::vec3(0.0f, 0.0f, 0.0f);
+    float verti[] = {-0.5, -0.5,   0.0, 0.5,   0.5, -0.5};
+
+    vector<Vertex> vertices = {
+        { {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+        { {0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+        { {0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} }
+    };
+    vector<GLuint> ind = {0, 1, 2};
+    vector<Texture> tex;
+    Mesh* triangle = new Mesh( vertices, ind, tex);
     
     // Main loop
     while(!endgame)
@@ -103,7 +107,8 @@ int game::mainLoop()
 
         if(events.window.event == SDL_WINDOWEVENT_CLOSE)
             endgame = true;
-
+        
+        triangle->Draw(*s);
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }
