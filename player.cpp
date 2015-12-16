@@ -11,7 +11,7 @@ player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode righ
         forwardKey(forwardKey), backwardKey(backwardKey), rightKey(rightKey), leftKey(leftKey),
         moveForward(false), moveRight(false), moveLeft(false), moveBackward(false),
         speed(1.5f), position( glm::vec3( 0.0f, 0.0f, 0.0f )),
-        lastX(0.0f), lastY(0.0f)
+        lastX(0.0f), lastY(0.0f), firstTime(true)
 {
     model = new Model( "Alien_Necromorph/Alien_Necromorph.obj" );
     
@@ -82,24 +82,28 @@ void player::move(float deltaTime)
     float x = pos.x;
     float y = pos.y;
     float z = pos.z;
+
+    glm::vec3 t = cam->getFront();
+    t.y = 0.0;
+    t = glm::normalize(t);
+    glm::vec3 v = glm::vec3( t.z, t.y, -t.x); 
     if(moveForward)
     {
-        z += speed*deltaTime;
+        pos += speed*deltaTime*t;
     }
     if(moveBackward)
     {
-        z -= speed*deltaTime;
+        pos -= speed*deltaTime*t;
     }
     if(moveRight)
     {
-        x += speed*deltaTime;
+        pos += speed*deltaTime*v;
     }
     if(moveLeft)
     {
-        x -= speed*deltaTime;
+        pos -= speed*deltaTime*v;
     }
-    glm::vec3 newPos = glm::vec3(x, y, z);
-    position = newPos;
+    position = pos;
     updateCamera();
 }
 
@@ -110,7 +114,22 @@ void player::updateCamera()
 
 void player::mouseMotion(int x, int y)
 {
-    float deltaX = x - lastX;
-    float deltaY = y - lastY;
-    cout << deltaX << " | " << deltaY << endl;
+    std::cout << x <<" | " << y << std::endl;
+    int t1;
+    int t2;
+    SDL_GetRelativeMouseState(&t1,&t2);
+    std::cout << t1 << " | " << t2 << std::endl;
+    float sensitivity = 0.05;
+    t1 *= sensitivity;
+    t2 *= -sensitivity;
+
+    cam->addYaw( t1 );
+    cam->addPitch( t2 );
+
+/*    if(pitch > 89.0f)
+        pitch = 89.0f;
+    if(pitch < -89.0f)
+    pitch = -89.0f; */
+
+    cam->updateCameraVectors();    
 }

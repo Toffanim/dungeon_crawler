@@ -41,7 +41,7 @@ int game::init()
         SDL_Quit(); 
         return(-1);
     }
-
+    SDL_SetRelativeMouseMode(SDL_TRUE);
     // Set openGL versions    
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
@@ -51,7 +51,7 @@ int game::init()
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
     // Create SDL Wikndow
-    window = SDL_CreateWindow("Test SDL 2.0", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_SHOWN| SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Dungeon Crawler", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_SHOWN| SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_GRABBED);
     if(window == 0)
     {
         std::cout << "Erreur lors de la creation de la fenetre : " << SDL_GetError() << std::endl;

@@ -93,10 +93,9 @@ void controller::processEvents()
             }
                 break;
             case SDL_MOUSEMOTION:
-                std::cout << "MOUSE" << std::endl;
                 if ( mouseEvent )
                 {
-                    mouseEvent( events.motion.x, events.motion.y );
+                    mouseEvent( events.motion.xrel, events.motion.yrel );
                 }
                 break;
         }

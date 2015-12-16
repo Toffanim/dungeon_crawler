@@ -51,7 +51,8 @@ private:
     bool moveRight;
     bool moveForward;
     bool moveBackward;
-
+    bool firstTime;
+    
     std::map<SDL_Keycode, std::string> mapping;
     float speed;
     glm::vec3 position;

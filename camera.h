@@ -24,6 +24,10 @@ public :
     GLfloat getZoom() { return(zoom); }
     void setPosition( glm::vec3 newPos ) { position = newPos; }
     glm::vec3 getPosition(){return(position);}
+    void addYaw( float value ) { yaw += value; }
+    void addPitch( float value ) { pitch += value; }
+    void updateCameraVectors();
+    glm::vec3 getFront(){return(front);}
 private:
     glm::vec3 position;
     glm::vec3 up;
@@ -33,7 +37,7 @@ private:
     glm::vec3 front;
     glm::vec3 right;
 
-    void updateCameraVectors();
+    
 };
 
 #endif
