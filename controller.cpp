@@ -7,19 +7,71 @@
    ======================================================================== */
 #include "controller.h"
 
-controller::controller( std::map<SDL_Keycode, std::string> mapping):mapping(mapping)
+controller::controller()
 {
-
 }
 
-event controller::getEventHandler()
+bool controller::onKeyPress(SDL_Event e)
 {
-    return(eventHandler);
+
+    SDL_Keycode code = e.key.keysym.sym;
+    const auto & pressFunc = mappingKeyPress[code];
+    if(pressFunc)
+    {
+        pressFunc();
+        return(true);
+    }
+    return(false);
+}
+
+bool controller::onMiscCallback(unsigned char e)
+{
+    const auto & func = mappingMisc[e];
+    if(func)
+    {
+        func();
+        return(true);
+    }
+    return(false);
+}
+
+void controller::setMiscCallback(unsigned char code, const std::function<void(void)> &func)
+{
+    mappingMisc[code] = func;
+}
+
+bool controller::onKeyRelease(SDL_Event e)
+{
+
+    SDL_Keycode code = e.key.keysym.sym;
+    const auto & releaseFunc = mappingKeyRelease[code];
+    if(releaseFunc)
+    {
+        releaseFunc();
+        return(true);
+    }
+    return(false);
+}
+
+void controller::setKeyReleaseCallback( SDL_Keycode code, const std::function<void(void)> &func)
+{
+    mappingKeyRelease[code] = func;
+}
+
+
+void controller::setKeyPressCallback( SDL_Keycode code, const std::function<void(void)> &func)
+{
+    mappingKeyPress[code] = func;
 }
 
 SDL_Event* controller::getEvents()
 {
     return(&events);
+}
+
+void controller::setMouseCallback( std::function<void(int, int)> &func )
+{
+    mouseEvent = func;
 }
 
 void controller::processEvents()
@@ -28,31 +80,24 @@ void controller::processEvents()
     {
         switch( events.type ){
             case SDL_KEYDOWN:
-            {
-                 for (std::map<SDL_Keycode, std::string>::iterator it = mapping.begin();
-                     it != mapping.end();
-                     ++it)
-                {
-                    if (events.key.keysym.sym == it->first)
-                        eventHandler.fire(it->second);
-                }
-            }
-                printf( "Key press detected\n" );
+                onKeyPress(events);
                 break;
 
             case SDL_KEYUP:
-                printf( "Key release detected\n" );
+                onKeyRelease(events);
                 break;
                 
             case SDL_WINDOWEVENT:
             {
-                
-                    switch (events.window.event) {
-                        case SDL_WINDOWEVENT_CLOSE:
-                            eventHandler.fire("close");            
-                    }
+                onMiscCallback(events.window.event);   
             }
-            default:
+                break;
+            case SDL_MOUSEMOTION:
+                std::cout << "MOUSE" << std::endl;
+                if ( mouseEvent )
+                {
+                    mouseEvent( events.motion.x, events.motion.y );
+                }
                 break;
         }
     }

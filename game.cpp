@@ -90,28 +90,34 @@ void game::close()
 int game::mainLoop()
 {
     player* p = new player();
-    p->getController()->getEventHandler().Register( "close" , [=]{ close(); });
-    camera* c = new camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
     shader* s = new shader( "Shaders/simple" );
     s->init();
     Model* m = new Model( "Alien_Necromorph/Alien_Necromorph.obj" );
-    // Main loop
+    float last = 0.0f;
+    float deltaTime = 0.0f;
+    float current = 0.0f;
+// Main loop
     while(!endgame)
     {
+        current = SDL_GetTicks();
+        deltaTime = (current - last)/1000;
+        last = current;
         p->getController()->processEvents();
+        p->move(deltaTime);
 
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         s->use();
-        glm::mat4 projectionMatrix = glm::perspective(c->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
-        glm::mat4 viewMatrix = c->getViewMatrix();
+        glm::mat4 projectionMatrix = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
+        glm::mat4 viewMatrix = p->getCamera()->getViewMatrix();
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
                glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
         // Draw the loaded model
         glm::mat4 model;
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // Translate it down a bit so it's at the center of the scene
+        model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f)); // Translate it down a bit so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)); // It's a bit too big for our scene, so scale it down
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
 

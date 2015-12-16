@@ -22,7 +22,8 @@ public :
 
     glm::mat4 getViewMatrix();
     GLfloat getZoom() { return(zoom); }
-           
+    void setPosition( glm::vec3 newPos ) { position = newPos; }
+    glm::vec3 getPosition(){return(position);}
 private:
     glm::vec3 position;
     glm::vec3 up;
