@@ -13,7 +13,12 @@ shader::shader(string filename):filename(filename)
 
 }
 
-void shader::init(map<int, string>& attr, map<int, string>& fragData)
+void shader::use()
+{
+    glUseProgram(program);
+}
+
+void shader::init( /*map<int, string>& attr, map<int, string>& fragData*/)
 {
     //string vertex = filename + ".vert";
     ostringstream os;
@@ -22,8 +27,15 @@ void shader::init(map<int, string>& attr, map<int, string>& fragData)
     os2 << filename << ".frag";
     
     program = loadShaderProgram(os.str(), os2.str());
-    bindAttrib(attr);
-    bindFragData(fragData);
+/*Active attributes that are not explicitly bound will be bound by the linker
+  when glLinkProgram is called. The locations assigned can be queried by calling
+  glGetAttribLocation.
+
+ attribute locations may be specified in the shader source text using a location
+ layout qualifier. In this case, the location of the attribute specified in the
+ shader's source takes precedence and may be queried by calling glGetAttribLocation. */
+    // bindAttrib(attr);
+    //bindFragData(fragData);
     linkShaderProgram();
 }
 
@@ -81,7 +93,7 @@ void shader::linkShaderProgram()
     }
 }
 
-
+#if 0
 void shader::bindAttrib( std::map<int, std::string>& attrib )
 {
     map<int, string>::iterator it;
@@ -103,3 +115,4 @@ void shader::bindFragData(std::map<int, std::string>& fragData )
         glBindFragDataLocation( program, it->first, it->second.c_str());
     }
 }
+#endif

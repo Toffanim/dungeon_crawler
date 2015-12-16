@@ -6,7 +6,7 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 #include "utils.h"
-
+#include <iostream>
 namespace utils {
     using namespace std;
 
@@ -17,7 +17,12 @@ namespace utils {
         filename = directory + '/' + filename;
         GLuint textureID;
         glGenTextures(1, &textureID);
-        SDL_Surface *image = IMG_Load(path);
+        SDL_Surface *image = IMG_Load(filename.c_str());
+        if(!image)
+        {
+            cout << "IMG_Load : " << IMG_GetError() << endl;
+            return(0);
+        }
         // Format de l'image
         GLenum formatInterne(0);
         GLenum format(0);

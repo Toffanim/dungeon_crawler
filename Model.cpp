@@ -11,11 +11,13 @@
     // Constructor, expects a filepath to a 3D model.
 Model::Model(GLchar* path)
     {
+        cout << "load model" << endl;
         this->loadModel(path);
+        cout << "model loaded" << endl;
     }
 
     // Draws the model, and thus all its meshes
-void Model::Draw(Shader shader)
+void Model::Draw(shader shader)
     {
         for(GLuint i = 0; i < this->meshes.size(); i++)
             this->meshes[i].Draw(shader);
@@ -49,7 +51,7 @@ void Model::processNode(aiNode* node, const aiScene* scene)
         {
             // The node object only contains indices to index the actual objects in the scene. 
             // The scene contains all the data, node is just to keep stuff organized (like relations between nodes).
-            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]]; 
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
             this->meshes.push_back(this->processMesh(mesh, scene));         
         }
         // After we've processed all of the meshes (if any) we then recursively process each of the children nodes
@@ -114,7 +116,6 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
             // Diffuse: texture_diffuseN
             // Specular: texture_specularN
             // Normal: texture_normalN
-
             // 1. Diffuse maps
             vector<Texture> diffuseMaps = this->loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
             textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
@@ -122,7 +123,6 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
             vector<Texture> specularMaps = this->loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
             textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
         }
-        
         // Return a mesh object created from the extracted mesh data
         return Mesh(vertices, indices, textures);
     }
@@ -150,7 +150,7 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type,
             if(!skip)
             {   // If texture hasn't been loaded already, load it
                 Texture texture;
-                texture.id = TextureFromFile(str.C_Str(), this->directory);
+                texture.id = utils::TextureFromFile(str.C_Str(), this->directory);
                 texture.type = typeName;
                 texture.path = str;
                 textures.push_back(texture);

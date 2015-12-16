@@ -1,7 +1,4 @@
 #Moteur
-
--Implémenter fonction pour load un mesh et le render (Assimp, DevIL pour les textures)
--Implémenter une caméra
 -Implémenter un player
 -Implémenter des mobs
 -Implémenter de l'eau
@@ -14,4 +11,4 @@
 
 
 
--vérifier que le endif des pragma once est bien a la fin du header
+-vérifier que le endif des pragma once est bien a la fin du header de chaque fichier

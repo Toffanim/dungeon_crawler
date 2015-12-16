@@ -21,13 +21,15 @@ class shader
 {
 public:
     shader(std::string filename);
-    void init(std::map<int, std::string>& attr, std::map<int, std::string>& fragData);
+    //void init(std::map<int, std::string>& attr, std::map<int, std::string>& fragData);
+    void init();
     GLuint getProgram() { return(program); }
+    void use();
 private :
     std::string filename;
     GLuint program;
-    void bindAttrib( std::map<int, std::string>& attrib );
-    void bindFragData( std::map<int, std::string>& fragData );
+    //void bindAttrib( std::map<int, std::string>& attrib );
+    //void bindFragData( std::map<int, std::string>& fragData );
     void linkShaderProgram();
     GLuint loadShaderProgram( const std::string& vertex, const std::string& fragment);
 };

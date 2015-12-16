@@ -11,7 +11,7 @@
 
 using namespace std;
 
-game::game()
+game::game(int width, int height) : screenWidth(width), screenHeight(height)
 {
 }
 
@@ -51,7 +51,7 @@ int game::init()
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
     // Create SDL Wikndow
-    window = SDL_CreateWindow("Test SDL 2.0", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN| SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Test SDL 2.0", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_SHOWN| SDL_WINDOW_OPENGL);
     if(window == 0)
     {
         std::cout << "Erreur lors de la creation de la fenetre : " << SDL_GetError() << std::endl;
@@ -82,33 +82,40 @@ int game::init()
     return(0);
 }
 
+void game::close()
+{
+    endgame = true;
+}
+
 int game::mainLoop()
 {
+    player* p = new player();
+    p->getController()->getEventHandler().Register( "close" , [=]{ close(); });
+    camera* c = new camera(glm::vec3(0.0f, 0.0f, 3.0f));
     shader* s = new shader( "Shaders/simple" );
-    map<int, string> attr;
-    map<int, string> fragData;
-    s->init( attr, fragData );
-
-    float verti[] = {-0.5, -0.5,   0.0, 0.5,   0.5, -0.5};
-
-    vector<Vertex> vertices = {
-        { {-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
-        { {0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
-        { {0.0f, 0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} }
-    };
-    vector<GLuint> ind = {0, 1, 2};
-    vector<Texture> tex;
-    Mesh* triangle = new Mesh( vertices, ind, tex);
-    
+    s->init();
+    Model* m = new Model( "Alien_Necromorph/Alien_Necromorph.obj" );
     // Main loop
     while(!endgame)
     {
-        SDL_WaitEvent(&events);
+        p->getController()->processEvents();
 
-        if(events.window.event == SDL_WINDOWEVENT_CLOSE)
-            endgame = true;
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        triangle->Draw(*s);
+        s->use();
+        glm::mat4 projectionMatrix = glm::perspective(c->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
+        glm::mat4 viewMatrix = c->getViewMatrix();
+        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+               glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+
+        // Draw the loaded model
+        glm::mat4 model;
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // Translate it down a bit so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)); // It's a bit too big for our scene, so scale it down
+        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+        m->Draw(*s);
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }

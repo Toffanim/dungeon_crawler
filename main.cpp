@@ -11,7 +11,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
 
-    game* mygame = new game();
+    game* mygame = new game(800,600);
     mygame->init();
     mygame->mainLoop();
 
