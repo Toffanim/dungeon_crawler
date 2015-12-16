@@ -1,5 +1,5 @@
 #Moteur
--Implémenter un player
+-Implémenter les lumières
 -Implémenter des mobs
 -Implémenter de l'eau
 

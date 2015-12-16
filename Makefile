@@ -1,46 +1,56 @@
+#Need to change the prefix for command as it's not easy for me
+#to do a tab char in emacs
 .RECIPEPREFIX = >
 
-CXX=g++
-CXXFLAGS= -Wall -std=c++11
-SDL = -lSDL2 -lGL -lSDL2_image
-GLEW = -lGLEW 
-ASSIMP = -lassimp
-EXEC=program
+#Define compiler related vars
+CXX := g++
+CXXFLAGS := -Wall -std=c++11
+SDL := -lSDL2 -lGL -lSDL2_image
+GLEW := -lGLEW 
+ASSIMP := -lassimp
 
-# -Wl,-rpath,/usr/lib64
-program : main.o game.o player.o controller.o camera.o model.o mesh.o shader.o utils.o
-> $(CXX) $^ -o $@ $(SDL) $(GLEW) $(ASSIMP)
+#Define project related vars
+EXEC := dungeonGL
+MODULES := main player game camera controller mesh shader utils
+SRC_DIR := $(addprefix src/, $(MODULES))
+BUILD_DIR := $(addprefix build/, $(MODULES))
 
-main.o : main.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o $@
+SRC := $(foreach sdir, $(SRC_DIR), $(wildcard $(sdir)/*.cpp))
+OBJ := $(patsubst src/%.cpp, build/%.o, $(SRC))
+vpath %.cpp $(SRC_DIR)
 
-game.o : game.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o $@
+#build command with .o and libs
+define build-cmd
+$(CXX) $^ -o $@ $(SDL) $(GLEW) $(ASSIMP)
+endef
 
-player.o : player.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o $@
+#default command taking a .cpp and outputing .o
+define default-cmd
+$1/%.o : %.cpp
+> $(CXX) -c $$< $(CXXFLAGS) -o $$@
+endef
 
-controller.o : controller.cpp
->$(CXX) -c $^ $(CXXFLAGS) -o $@
+#build program
+build/$(EXEC) : $(OBJ)
+> $(build-cmd)
 
-camera.o : camera.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o $@
+#Make commands PHONY just in case we have a file with one of those names
+#Most likely not the case
+.PHONY: all checkdirs clean
 
-model.o : Model.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o  $@
+#Need to create module target dir in build
+checkdirs: $(BUILD_DIR)
 
-mesh.o : mesh.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o $@
+$(BUILD_DIR):
+> @mkdir -p $@
 
-shader.o : shader.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o $@
+#common clean cmd
+clean:
+> @rm -rf $(BUILD_DIR)
 
-utils.o : utils.cpp
-> $(CXX) -c $^ $(CXXFLAGS) -o $@
+#cmd to execute if we want to compile without Makefile problems
+all: checkdirs build/$(EXEC) mvassets
 
-clean :
-> rm *.o
-
-rclean :
-> clean
-> rm $(EXEC)
+#iterate through each module target and call the default cmd
+#Basically, create .o from .cpp files in modules directories
+$(foreach bdir, $(BUILD_DIR), $(eval $(call default-cmd, $(bdir))))

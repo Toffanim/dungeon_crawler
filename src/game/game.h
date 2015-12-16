@@ -13,13 +13,13 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include "player.h"
-#include "controller.h"
-#include "Model.h"
-#include "camera.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
+#include "../player/player.h"
+#include "../controller/controller.h"
+#include "../mesh/model.h"
+#include "../camera/camera.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 class game
 {

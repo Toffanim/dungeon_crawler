@@ -9,12 +9,12 @@
 
 #define PLAYER_H
 
-#include "Model.h"
-#include "camera.h"
-#include "controller.h"
+#include "../mesh/model.h"
+#include "../camera/camera.h"
+#include "../controller/controller.h"
 #include <SDL2/SDL.h>
 #include <map>
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 class player
 {

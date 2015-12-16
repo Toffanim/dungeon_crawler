@@ -36,12 +36,12 @@ public:
 
     // Draws the model, and thus all its meshes
     void Draw(shader shader);
-    
+    vector<Texture> textures_loaded;
 private:
     /*  Model Data  */
     vector<Mesh> meshes;
     string directory;
-    vector<Texture> textures_loaded;    // Stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+        // Stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
 
     /*  Functions   */
     // Loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.

@@ -18,9 +18,9 @@
 // GL Includes
 #include <GL/glew.h> // Contains all the necessery OpenGL includes
 #include <assimp/types.h>
-#include "shader.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
+#include "../shader/shader.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 using namespace std;
 
 struct Vertex {

@@ -5,7 +5,7 @@
    $Creator: Casey Muratori $
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
-#include "Model.h"
+#include "model.h"
 
     /*  Functions   */
     // Constructor, expects a filepath to a 3D model.

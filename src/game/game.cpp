@@ -77,8 +77,6 @@ int game::init()
 
     startupGLDiagnostics();
     
-    // Vertices et coordonnées
-    float vertices[] = {-0.5, -0.5,   0.0, 0.5,   0.5, -0.5};
     return(0);
 }
 
@@ -89,14 +87,18 @@ void game::close()
 
 int game::mainLoop()
 {
+    Model* test = new Model("../Assets/Models/Wall/wall.obj");
+    cout << test->textures_loaded.size() << endl;
     player* p = new player();
     p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
-    shader* s = new shader( "Shaders/simple" );
+    p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
+    shader* s = new shader( "../Shaders/simple" );
     s->init();
-    Model* m = new Model( "Alien_Necromorph/Alien_Necromorph.obj" );
+    Model* m = new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" );
     float last = 0.0f;
     float deltaTime = 0.0f;
     float current = 0.0f;
+    
 // Main loop
     while(!endgame)
     {
@@ -106,22 +108,28 @@ int game::mainLoop()
         p->getController()->processEvents();
         p->move(deltaTime);
 
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(1.0f, 0.3f, 0.3f, 1.0f);        
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         
         s->use();
         glm::mat4 projectionMatrix = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
         glm::mat4 viewMatrix = p->getCamera()->getViewMatrix();
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-               glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
-        // Draw the loaded model
+// Draw the loaded model
         glm::mat4 model;
         model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f)); // Translate it down a bit so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)); // It's a bit too big for our scene, so scale it down
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
 
         m->Draw(*s);
+
+        model = glm::mat4();
+        model = glm::scale(model, glm::vec3(5.0,5.0,5.0));
+        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        test->Draw(*s);
+
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }

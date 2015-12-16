@@ -50,7 +50,7 @@ namespace utils {
         }
         // Assign texture to ID
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, formatInterne, image->w, image->h, 0, format, GL_UNSIGNED_BYTE, image);
+        glTexImage2D(GL_TEXTURE_2D, 0, formatInterne, image->w, image->h, 0, format, GL_UNSIGNED_BYTE, image->pixels);
         glGenerateMipmap(GL_TEXTURE_2D);    
 
         // Parameters

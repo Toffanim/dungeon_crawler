@@ -9,9 +9,9 @@
 
 #define CONTROLLER_H
 #include <SDL2/SDL.h>
-#include "event.h"
 #include <vector>
 #include <functional>
+#include <map>
 
 class controller
 {
@@ -26,7 +26,6 @@ public:
     void setKeyPressCallback(SDL_Keycode code, const std::function<void(void)> &func);
     void setMiscCallback(unsigned char code, const std::function<void(void)> &func);
     void setMouseCallback(std::function<void(int, int)> &func);
-    event getEventHandler();
 private:
     SDL_Event events;
     std::map<SDL_Keycode, std::function<void(void)>> mappingKeyRelease;
