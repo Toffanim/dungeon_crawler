@@ -49,7 +49,7 @@ clean:
 > @rm -rf $(BUILD_DIR)
 
 #cmd to execute if we want to compile without Makefile problems
-all: checkdirs build/$(EXEC) mvassets
+all: checkdirs build/$(EXEC)
 
 #iterate through each module target and call the default cmd
 #Basically, create .o from .cpp files in modules directories

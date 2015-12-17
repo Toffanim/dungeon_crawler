@@ -11,9 +11,7 @@
     // Constructor, expects a filepath to a 3D model.
 Model::Model(GLchar* path)
     {
-        cout << "load model" << endl;
         this->loadModel(path);
-        cout << "model loaded" << endl;
     }
 
     // Draws the model, and thus all its meshes
@@ -29,7 +27,7 @@ void Model::loadModel(string path)
     {
         // Read file via ASSIMP
         Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
         // Check for errors
         if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
         {
@@ -84,6 +82,18 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
             vector.y = mesh->mNormals[i].y;
             vector.z = mesh->mNormals[i].z;
             vertex.Normal = vector;
+            cout << "N : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
+            // Tangent space
+            vector.x = mesh->mTangents[i].x;
+            vector.y = mesh->mTangents[i].y;
+            vector.z = mesh->mTangents[i].z;
+            vertex.Tangent = vector;
+            cout << "T : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
+            vector.x = mesh->mBitangents[i].x;
+            vector.y = mesh->mBitangents[i].y;
+            vector.z = mesh->mBitangents[i].z;
+            vertex.Bitangent = vector;
+            cout << "B : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
             // Texture Coordinates
             if(mesh->mTextureCoords[0]) // Does the mesh contain texture coordinates?
             {
@@ -122,6 +132,9 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
             // 2. Specular maps
             vector<Texture> specularMaps = this->loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
             textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+            //3. Normal maps
+            vector<Texture> normalMaps = this->loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal");
+            textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
         }
         // Return a mesh object created from the extracted mesh data
         return Mesh(vertices, indices, textures);

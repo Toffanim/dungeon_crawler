@@ -1,14 +1,18 @@
 #Moteur
--Implémenter les lumières
+-Implémenter les lumières :
+    -pour le moment uniquement une directional light en position de la caméra
+    -maybe la mettre en avant du player et faire une espece de boule magique (bloom)
 -Implémenter des mobs
 -Implémenter de l'eau
+-Implémenter les collisons :
+    -Sera fait avec un simple AABB
 
+-Implémenter parrallax/normal/displacement mapping
+    -normal mapping done
 #Gameplay
 
 -Implémenter la lecture du terrain
 -Implémenter une AI basique pour les mobs
+    - maybe regarder du coter des navmaps pour essayer d'en faire une
 -Implémenter un coffre
 
-
-
--vérifier que le endif des pragma once est bien a la fin du header de chaque fichier

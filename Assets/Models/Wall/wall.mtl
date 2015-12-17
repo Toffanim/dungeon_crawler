@@ -6,3 +6,4 @@ newmtl brick
    illum 2
    map_Ka /brickwall.jpg
    map_Kd /brickwall.jpg     
+   map_bump /brickwall_normal.jpg

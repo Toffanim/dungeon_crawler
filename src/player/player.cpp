@@ -114,11 +114,11 @@ void player::updateCamera()
 
 void player::mouseMotion(int x, int y)
 {
-    std::cout << x <<" | " << y << std::endl;
+    //Not using x and y because SDL is bugged in relative coordinates
+    //Create dependency but better for motion use
     int t1;
     int t2;
     SDL_GetRelativeMouseState(&t1,&t2);
-    std::cout << t1 << " | " << t2 << std::endl;
     float sensitivity = 0.05;
     t1 *= sensitivity;
     t2 *= -sensitivity;

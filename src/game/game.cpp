@@ -85,16 +85,145 @@ void game::close()
     endgame = true;
 }
 
+struct RGB
+{
+    unsigned char r, g, b;
+};
+
+struct ImageRGB
+{
+    int w, h;
+    vector<RGB> data;
+};
+
+void eat_comment(ifstream &f)
+{
+    char linebuf[1024];
+    char ppp;
+    while (ppp = f.peek(), ppp == '\n' || ppp == '\r')
+        f.get();
+    if (ppp == '#')
+        f.getline(linebuf, 1023);
+}
+
+void load_ppm(ImageRGB &img, const string &name)
+{
+    ifstream f(name.c_str(), ios::binary);
+    if (f.fail())
+    {
+        cout << "Could not open file: " << name << endl;
+        return;
+    }
+
+    // get type of file
+    eat_comment(f);
+    int mode = 0;
+    string s;
+    f >> s;
+    if (s == "P3")
+        mode = 3;
+    else if (s == "P6")
+        mode = 6;
+    
+    // get w
+    eat_comment(f);
+    f >> img.w;
+
+    // get h
+    eat_comment(f);
+    f >> img.h;
+    
+    // get bits
+    eat_comment(f);
+    int bits = 0;
+    f >> bits;
+    
+    // error checking
+    if (mode != 3 && mode != 6)
+    {
+        cout << "Unsupported magic number" << endl;
+        f.close();
+        return;
+    }
+    if (img.w < 1)
+    {
+        cout << "Unsupported width: " << img.w << endl;
+        f.close();
+        return;
+    }
+    if (img.h < 1)
+    {
+        cout << "Unsupported height: " << img.h << endl;
+        f.close();
+        return;
+    }
+    if (bits < 1 || bits > 255)
+    {
+        cout << "Unsupported number of bits: " << bits << endl;
+        f.close();
+        return;
+    }
+
+    // load image data
+    img.data.resize(img.w * img.h);
+
+    if (mode == 6)
+    {
+        f.get();
+        f.read((char*)&img.data[0], img.data.size() * 3);
+    }
+    else if (mode == 3)
+    {
+        for (int i = 0; i < img.data.size(); i++)
+        {
+            int v;
+            f >> v;
+            img.data[i].r = v;
+            f >> v;
+            img.data[i].g = v;
+            f >> v;
+            img.data[i].b = v;
+        }
+    }
+
+    // close file
+    f.close();
+}
+
+
+void loadMaze( const string &filename)
+{
+    ImageRGB img;
+    load_ppm(img, filename);
+    vector<RGB>::iterator it;
+    it = img.data.begin();
+    cout << (int)(*it).r << endl;
+    for( it = img.data.begin();
+         it != img.data.end();
+         ++it)
+    {
+        //cout << (int)(*it).r << " | " << (int)(*it).g << " | " << (int)(*it).b << endl;
+    }
+}
+
 int game::mainLoop()
 {
-    Model* test = new Model("../Assets/Models/Wall/wall.obj");
-    cout << test->textures_loaded.size() << endl;
+
+    loadMaze( "../Assets/maze_ex.ppm" );
+
+    Model* wall = new Model("../Assets/Models/Wall/wall.obj");
+    //Model* m = new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" );
+
     player* p = new player();
     p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
     p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
-    shader* s = new shader( "../Shaders/simple" );
+
+    shader* s = new shader( "../Shaders/simpleLight" );
     s->init();
-    Model* m = new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" );
+
+    shader* normals = new shader( "../Shaders/normals");
+    normals->init();
+    
     float last = 0.0f;
     float deltaTime = 0.0f;
     float current = 0.0f;
@@ -112,24 +241,57 @@ int game::mainLoop()
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         
         s->use();
-        glm::mat4 projectionMatrix = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
-        glm::mat4 viewMatrix = p->getCamera()->getViewMatrix();
-        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
+        // Transformation matrices
+        glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
+        glm::mat4 view = p->getCamera()->getViewMatrix();
+        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+        // Set the lighting uniforms
+        glUniform3f(glGetUniformLocation(s->getProgram(), "viewPos"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+        // Point light 1
+        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].position"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);     
+        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].ambient"), 0.05f, 0.05f, 0.05f);       
+        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].diffuse"), 1.0f, 1.0f, 1.0f); 
+        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].specular"), 1.0f, 1.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].constant"), 1.0f);
+        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].linear"), 0.009);
+        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].quadratic"), 0.0032);  
+        
 // Draw the loaded model
         glm::mat4 model;
         model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f)); // Translate it down a bit so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)); // It's a bit too big for our scene, so scale it down
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(glGetUniformLocation(s->getProgram(), "normalMapping"), GL_FALSE);
+        //  m->Draw(*s);
 
-        m->Draw(*s);
+
+        normals->use();
+        // Set the lighting uniforms
+        glUniform3f(glGetUniformLocation(normals->getProgram(), "viewPos"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+        // Point light 1
+        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].position"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);     
+        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].ambient"), 0.05f, 0.05f, 0.05f);       
+        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].diffuse"), 1.0f, 1.0f, 1.0f); 
+        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].specular"), 1.0f, 1.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(normals->getProgram(), "pointLights[0].constant"), 1.0f);
+        glUniform1f(glGetUniformLocation(normals->getProgram(), "pointLights[0].linear"), 0.009);
+        glUniform1f(glGetUniformLocation(normals->getProgram(), "pointLights[0].quadratic"), 0.0032);  
+        
+        glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(view));
 
         model = glm::mat4();
-        model = glm::scale(model, glm::vec3(5.0,5.0,5.0));
-        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        test->Draw(*s);
-
+        model = glm::scale(model, glm::vec3(2.0,2.0,2.0));
+        glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(glGetUniformLocation(normals->getProgram(), "normalMapping"), GL_TRUE);
+        wall->Draw(*normals);
+        model = glm::translate(model, glm::vec3(1.0,0.0,0.0));
+ glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        wall->Draw(*normals);
+        
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }
