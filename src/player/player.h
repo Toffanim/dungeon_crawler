@@ -33,6 +33,10 @@ public:
     void stopMoveBackward();
     void stopMoveRight();
     void stopMoveLeft();
+    void stopMoveUp();;
+    void startMoveUp();
+    void startMoveDown();
+    void stopMoveDown();
 
     void move(float deltaTime);
     void updateCamera();
@@ -51,6 +55,8 @@ private:
     bool moveRight;
     bool moveForward;
     bool moveBackward;
+    bool moveUp;
+    bool moveDown;
     bool firstTime;
     
     std::map<SDL_Keycode, std::string> mapping;

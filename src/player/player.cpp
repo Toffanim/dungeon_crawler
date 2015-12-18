@@ -29,11 +29,34 @@ player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode righ
         c->setKeyReleaseCallback(backwardKey, std::bind(&player::stopMoveBackward, this));
         c->setKeyReleaseCallback(rightKey, std::bind(&player::stopMoveRight, this));
         c->setKeyReleaseCallback(leftKey, std::bind(&player::stopMoveLeft, this));
+        c->setKeyPressCallback(SDLK_UP, std::bind(&player::startMoveUp, this));
+        c->setKeyReleaseCallback(SDLK_UP, std::bind(&player::stopMoveUp, this));
+        c->setKeyPressCallback(SDLK_DOWN, std::bind(&player::startMoveDown, this));
+        c->setKeyReleaseCallback(SDLK_DOWN, std::bind(&player::stopMoveDown, this));
         std::function<void(int, int)> f = std::bind(&player::mouseMotion, this, std::placeholders::_1, std::placeholders::_2);
         c->setMouseCallback(f);
         cam = new camera( position );
 }
 
+void player::startMoveUp()
+{
+    moveUp = true;
+}
+
+void player::startMoveDown()
+{
+    moveDown = true;
+}
+
+void player::stopMoveDown()
+{
+    moveDown=false;
+}
+
+void player::stopMoveUp()
+{
+    moveUp = false;
+}
 
 void player::stopMoveForward()
 {
@@ -87,6 +110,7 @@ void player::move(float deltaTime)
     t.y = 0.0;
     t = glm::normalize(t);
     glm::vec3 v = glm::vec3( t.z, t.y, -t.x); 
+    glm::vec3 u = glm::cross(t,v);
     if(moveForward)
     {
         pos += speed*deltaTime*t;
@@ -102,6 +126,14 @@ void player::move(float deltaTime)
     if(moveLeft)
     {
         pos -= speed*deltaTime*v;
+    }
+    if(moveUp)
+    {
+        pos += speed*deltaTime*u;
+    }
+    if(moveDown)
+    {
+        pos -= speed*deltaTime*u;
     }
     position = pos;
     updateCamera();

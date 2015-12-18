@@ -6,7 +6,7 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 #include "game.h"
-
+#define PI 3.14159265359f
 
 
 using namespace std;
@@ -76,6 +76,8 @@ int game::init()
     }
 
     startupGLDiagnostics();
+    glEnable(GL_DEPTH_TEST);    // enable Z-buffering 
+    glEnable(GL_CULL_FACE);
     
     return(0);
 }
@@ -191,38 +193,175 @@ void load_ppm(ImageRGB &img, const string &name)
 }
 
 
-void loadMaze( const string &filename)
+struct SceneNode
+{
+    Model* model;
+    glm::mat4 modelMatrix;    
+};
+
+struct room
+{
+    bool murSud;
+    bool murEst;
+    bool murOuest;
+    bool murNord;
+    int offsetX;
+    int offsetY;
+};
+
+void makeRoom(vector<SceneNode>& scene, room& r)
+{
+    SceneNode node;
+
+    // if (wallNorth) ...
+    // coord : 1.0 = 1m
+    //scal = tileSize
+
+    int ox = r.offsetX;
+    int oy = r.offsetY;
+    //sol
+    node.model = new Model("../Assets/Models/Wall/wall.obj");
+    node.modelMatrix = glm::rotate(node.modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+    glm::vec3 position = glm::vec3(ox, oy, 0.1f);
+    node.modelMatrix = glm::translate(node.modelMatrix, position);
+    scene.push_back(node);
+
+    //plafond
+    SceneNode n;
+    n.model = node.model;
+    n.modelMatrix = glm::rotate(n.modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+    position = glm::vec3(ox, -(oy+1)*1.0f, 0.9f);
+    n.modelMatrix = glm::translate( n.modelMatrix, position );
+    scene.push_back(n);
+
+    if(r.murSud)
+    {
+     //mur sud
+    SceneNode node2;
+    node2.model = node.model;
+    node2.modelMatrix = glm::rotate(node2.modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
+    position = glm::vec3(-(ox+1)*1.0f, -0.1f, (-oy));
+    node2.modelMatrix = glm::translate(node2.modelMatrix, position);
+    scene.push_back(node2);
+    }
+    //mur nord
+    if(r.murNord)
+    {
+        SceneNode node3;
+        node3.model = node.model;
+        position = glm::vec3(ox, -0.1f, (oy+1)*1.0f);
+        node3.modelMatrix = glm::translate(node3.modelMatrix, position);
+        scene.push_back(node3);
+    }
+    if(r.murEst)
+    {
+        //mur est
+        SceneNode node4;
+        node4.model = node.model;
+        node4.modelMatrix = glm::rotate( node4.modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        position = glm::vec3(oy, -0.1f, -ox);
+        node4.modelMatrix = glm::translate( node4.modelMatrix, position);
+        scene.push_back(node4);
+    }
+    if(r.murOuest)
+    {
+        //mur ouest
+        SceneNode node5;
+        node5.model = node.model;
+        node5.modelMatrix = glm::rotate( node5.modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        position = glm::vec3(-(oy+1)*1.0f, -0.1f, (ox+1)*1.0f);
+    node5.modelMatrix = glm::translate( node5.modelMatrix, position);
+    scene.push_back(node5);
+    }
+}
+
+bool isColorEquals( glm::vec3 c1, glm::vec3 c2)
+{
+    if ( c1.x == c2.x && c1.y == c2.y && c1.z == c2.z)
+        return (true);
+    return (false);
+}
+
+void loadMaze( const string &filename, vector<SceneNode>& scene)
 {
     ImageRGB img;
     load_ppm(img, filename);
-    vector<RGB>::iterator it;
-    it = img.data.begin();
-    cout << (int)(*it).r << endl;
-    for( it = img.data.begin();
-         it != img.data.end();
-         ++it)
+
+    for( int i = 0;
+         i < img.w;
+         ++i)
     {
+        for ( int j = 0;
+              j < img.h;
+              ++j )
+        {
+            int idx = (img.w *j)+i;
+            if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+                                glm::vec3(255,255,255)))
+            {
+                //room
+                cout << "Room" << endl;
+                room r;
+                r.offsetX = i;
+                r.offsetY = j;
+                r.murOuest = false;
+                r.murEst = false;
+                r.murNord = false;
+                r.murSud = false;
+//check north connexion
+                int nidx = idx-(img.w);
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0)))
+                {
+                    r.murNord = true;
+                }
+                nidx = idx+(img.w);
+                if ( nidx > img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0))) 
+                {
+                    r.murSud = true;
+                }
+                nidx = idx-1;
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0))) 
+                {
+                    r.murOuest = true;
+                }
+                nidx = idx+1;
+                if ( nidx > img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0))) 
+                {
+                    r.murEst = true;
+                }
+                makeRoom(scene,r);
+            }
+
+        }        
         //cout << (int)(*it).r << " | " << (int)(*it).g << " | " << (int)(*it).b << endl;
+    }
+}
+
+void drawScene( vector<SceneNode>& scene, shader* shader)
+{
+    for ( vector<SceneNode>::iterator it = scene.begin();
+          it != scene.end();
+          ++it)
+    {
+        glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "model"),
+                           1, GL_FALSE, glm::value_ptr((*it).modelMatrix));
+        (*it).model->Draw(*shader);
     }
 }
 
 int game::mainLoop()
 {
 
-    loadMaze( "../Assets/maze_ex.ppm" );
-
-    Model* wall = new Model("../Assets/Models/Wall/wall.obj");
-    //Model* m = new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" );
+    vector<SceneNode> scene;
+    loadMaze( "../Assets/mazeTest.ppm", scene);
 
     player* p = new player();
     p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
     p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
-
-    shader* s = new shader( "../Shaders/simpleLight" );
-    s->init();
-
-    shader* normals = new shader( "../Shaders/normals");
-    normals->init();
     
     float last = 0.0f;
     float deltaTime = 0.0f;
@@ -237,11 +376,13 @@ int game::mainLoop()
         p->getController()->processEvents();
         p->move(deltaTime);
 
-        glClearColor(1.0f, 0.3f, 0.3f, 1.0f);        
+        glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
+        glClearDepth(1);        
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        
-        s->use();
 
+        shader* s = new shader("../Shaders/simpleLight" );
+        s->init();
+        s->use();
         // Transformation matrices
         glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
         glm::mat4 view = p->getCamera()->getViewMatrix();
@@ -258,7 +399,10 @@ int game::mainLoop()
         glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].constant"), 1.0f);
         glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].linear"), 0.009);
         glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].quadratic"), 0.0032);  
-        
+
+        drawScene(scene, s);
+
+#if 0      
 // Draw the loaded model
         glm::mat4 model;
         model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f)); // Translate it down a bit so it's at the center of the scene
@@ -266,32 +410,7 @@ int game::mainLoop()
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(glGetUniformLocation(s->getProgram(), "normalMapping"), GL_FALSE);
         //  m->Draw(*s);
-
-
-        normals->use();
-        // Set the lighting uniforms
-        glUniform3f(glGetUniformLocation(normals->getProgram(), "viewPos"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
-        // Point light 1
-        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].position"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);     
-        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].ambient"), 0.05f, 0.05f, 0.05f);       
-        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].diffuse"), 1.0f, 1.0f, 1.0f); 
-        glUniform3f(glGetUniformLocation(normals->getProgram(), "pointLights[0].specular"), 1.0f, 1.0f, 1.0f);
-        glUniform1f(glGetUniformLocation(normals->getProgram(), "pointLights[0].constant"), 1.0f);
-        glUniform1f(glGetUniformLocation(normals->getProgram(), "pointLights[0].linear"), 0.009);
-        glUniform1f(glGetUniformLocation(normals->getProgram(), "pointLights[0].quadratic"), 0.0032);  
-        
-        glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-
-        model = glm::mat4();
-        model = glm::scale(model, glm::vec3(2.0,2.0,2.0));
-        glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(glGetUniformLocation(normals->getProgram(), "normalMapping"), GL_TRUE);
-        wall->Draw(*normals);
-        model = glm::translate(model, glm::vec3(1.0,0.0,0.0));
- glUniformMatrix4fv(glGetUniformLocation(normals->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        wall->Draw(*normals);
-        
+ #endif       
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }
