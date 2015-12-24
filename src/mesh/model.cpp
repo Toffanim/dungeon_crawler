@@ -36,7 +36,7 @@ void Model::loadModel(string path)
         }
         // Retrieve the directory path of the filepath
         this->directory = path.substr(0, path.find_last_of('/'));
-
+ 
         // Process ASSIMP's root node recursively
         this->processNode(scene->mRootNode, scene);
     }
@@ -50,12 +50,14 @@ void Model::processNode(aiNode* node, const aiScene* scene)
             // The node object only contains indices to index the actual objects in the scene. 
             // The scene contains all the data, node is just to keep stuff organized (like relations between nodes).
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            this->meshes.push_back(this->processMesh(mesh, scene));         
+            this->meshes.push_back(this->processMesh(mesh, scene));
+//            cout << "end," << endl;
         }
         // After we've processed all of the meshes (if any) we then recursively process each of the children nodes
         for(GLuint i = 0; i < node->mNumChildren; i++)
         {
             this->processNode(node->mChildren[i], scene);
+            //          cout << "oznedoin" << endl;
         }
 
     }
@@ -66,7 +68,10 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
         vector<Vertex> vertices;
         vector<GLuint> indices;
         vector<Texture> textures;
-
+        //cout << "vertices" << endl;
+        //cout << mesh->mVertices->Length() <<endl;
+        //cout << mesh->mNormals->Length() << endl;
+        //cout << mesh->mTangents->Length() << endl;
         // Walk through each of the mesh's vertices
         for(GLuint i = 0; i < mesh->mNumVertices; i++)
         {
@@ -77,23 +82,25 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
             vector.y = mesh->mVertices[i].y;
             vector.z = mesh->mVertices[i].z;
             vertex.Position = vector;
+            //  cout << "poition" << endl;
             // Normals
             vector.x = mesh->mNormals[i].x;
             vector.y = mesh->mNormals[i].y;
             vector.z = mesh->mNormals[i].z;
             vertex.Normal = vector;
-            cout << "N : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
+            //cout << "normals " << endl;
+            //cout << "N : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
             // Tangent space
             vector.x = mesh->mTangents[i].x;
             vector.y = mesh->mTangents[i].y;
             vector.z = mesh->mTangents[i].z;
             vertex.Tangent = vector;
-            cout << "T : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
+            //cout << "T : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
             vector.x = mesh->mBitangents[i].x;
             vector.y = mesh->mBitangents[i].y;
             vector.z = mesh->mBitangents[i].z;
             vertex.Bitangent = vector;
-            cout << "B : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
+            //cout << "B : (" << vector.x << ", " << vector.y << " ," << vector.z << " )" << endl;
             // Texture Coordinates
             if(mesh->mTextureCoords[0]) // Does the mesh contain texture coordinates?
             {
@@ -108,6 +115,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
                 vertex.TexCoords = glm::vec2(0.0f, 0.0f);
             vertices.push_back(vertex);
         }
+        //cout << "faces" << endl;
         // Now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
         for(GLuint i = 0; i < mesh->mNumFaces; i++)
         {

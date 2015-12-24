@@ -176,7 +176,7 @@ void load_ppm(ImageRGB &img, const string &name)
     }
     else if (mode == 3)
     {
-        for (int i = 0; i < img.data.size(); i++)
+        for (unsigned int i = 0; i < img.data.size(); i++)
         {
             int v;
             f >> v;
@@ -234,7 +234,7 @@ void makeRoom(vector<SceneNode>& scene, room& r)
     n.modelMatrix = glm::translate( n.modelMatrix, position );
     scene.push_back(n);
 
-    if(r.murSud)
+    if(r.murNord)
     {
      //mur sud
     SceneNode node2;
@@ -245,7 +245,7 @@ void makeRoom(vector<SceneNode>& scene, room& r)
     scene.push_back(node2);
     }
     //mur nord
-    if(r.murNord)
+    if(r.murSud)
     {
         SceneNode node3;
         node3.model = node.model;
@@ -253,7 +253,7 @@ void makeRoom(vector<SceneNode>& scene, room& r)
         node3.modelMatrix = glm::translate(node3.modelMatrix, position);
         scene.push_back(node3);
     }
-    if(r.murEst)
+    if(r.murOuest)
     {
         //mur est
         SceneNode node4;
@@ -263,7 +263,7 @@ void makeRoom(vector<SceneNode>& scene, room& r)
         node4.modelMatrix = glm::translate( node4.modelMatrix, position);
         scene.push_back(node4);
     }
-    if(r.murOuest)
+    if(r.murEst)
     {
         //mur ouest
         SceneNode node5;
@@ -282,28 +282,37 @@ bool isColorEquals( glm::vec3 c1, glm::vec3 c2)
     return (false);
 }
 
-void loadMaze( const string &filename, vector<SceneNode>& scene)
+void loadMaze( const string &filename, vector<SceneNode>& scene, player* p)
 {
     ImageRGB img;
     load_ppm(img, filename);
-
+    room r;
+    r.offsetX = 2;
+    r.offsetY = 0;
+    r.murOuest = true;
+    r.murEst = false;
+    r.murNord = true;
+    r.murSud = false;
+    // makeRoom(scene, r);
     for( int i = 0;
-         i < img.w;
+         i < img.h;
          ++i)
     {
         for ( int j = 0;
-              j < img.h;
+              j < img.w;
               ++j )
         {
-            int idx = (img.w *j)+i;
+            int idx = (img.w *i)+j;
             if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                 glm::vec3(255,255,255)))
             {
                 //room
-                cout << "Room" << endl;
+                //cout << "Room" << endl;
+                //cout << idx << endl;
+                //cout << img.data.size()<<endl;
                 room r;
-                r.offsetX = i;
-                r.offsetY = j;
+                r.offsetX = j;
+                r.offsetY = i;
                 r.murOuest = false;
                 r.murEst = false;
                 r.murNord = false;
@@ -314,54 +323,127 @@ void loadMaze( const string &filename, vector<SceneNode>& scene)
                                                 glm::vec3(0,0,0)))
                 {
                     r.murNord = true;
+                    //cout << "mur nord" << endl;
                 }
                 nidx = idx+(img.w);
-                if ( nidx > img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0))) 
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
                 {
                     r.murSud = true;
+                    //cout << "mur sud" << endl;
                 }
                 nidx = idx-1;
                 if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
                                                 glm::vec3(0,0,0))) 
                 {
                     r.murOuest = true;
+                    // cout << "mur ouest" << endl;
                 }
                 nidx = idx+1;
-                if ( nidx > img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0))) 
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
                 {
                     r.murEst = true;
+                    //    cout << "mur est" << endl;
                 }
                 makeRoom(scene,r);
             }
 
+            if( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+                               glm::vec3(255,0,0)))
+            {
+                p->setPosition( glm::vec3( j+(0.5), 0.5, i+(0.5) ) );
+                //cout << "changePosition" << endl;
+                if ( idx % img.w == 0)
+                {//bord gauche
+                    // cout << "bord gauche" << endl;
+                    p->getCamera()->addYaw(-90.0);
+                }
+                else if ( idx % img.w == img.w-1)
+                {   //bord droit
+                    //                  cout << "bord droit" << endl;
+                    p->getCamera()->addYaw(90.0);
+                }
+                else if ( idx < img.w )
+                {
+//                    cout << "bord bas" << endl;                    
+                }
+                else
+                {
+                    //cout << "bord haut" << endl;
+                    p->getCamera()->addYaw(-180.0);
+                }
+                //TODO(marc) : FIX ME !!! + add makeRoom to entry and exit tiles
+                //recul le player de moitier
+                p->setPosition( p->getPosition()- p->getCamera()->getFront());
+            }
+            if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+                                glm::vec3(255,126,0)))
+            {
+                //door
+                //NOTE(marc): we should check if door is valid or on image border
+                //to be more accurate.
+                int nidx = idx-1;
+                int nidx2 = idx+1;
+                if(  isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+                                    glm::vec3(255,126,0))
+                     &&  isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+                                        glm::vec3(255,126,0)))
+                {
+//door along x axis
+                    cout << "door x axis" << endl;                    
+                    SceneNode node3;
+                    node3.model = new Model("../Assets/Models/Wall/wall.obj");
+                    glm::vec3 position = glm::vec3(j, -0.1f, (i+0.5f)*1.0f);
+                    node3.modelMatrix = glm::translate(node3.modelMatrix, position);
+                    scene.push_back(node3);
+                }
+                else
+                {
+//door along y axis
+                    cout << "door y axis" << endl;
+                }
+           
+            }
         }        
         //cout << (int)(*it).r << " | " << (int)(*it).g << " | " << (int)(*it).b << endl;
     }
+
 }
 
 void drawScene( vector<SceneNode>& scene, shader* shader)
 {
     for ( vector<SceneNode>::iterator it = scene.begin();
-          it != scene.end();
-          ++it)
+    it != scene.end();
+    ++it)
     {
         glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "model"),
-                           1, GL_FALSE, glm::value_ptr((*it).modelMatrix));
+        1, GL_FALSE, glm::value_ptr((*it).modelMatrix));
         (*it).model->Draw(*shader);
     }
 }
 
 int game::mainLoop()
 {
-
     vector<SceneNode> scene;
-    loadMaze( "../Assets/mazeTest.ppm", scene);
-
     player* p = new player();
     p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
     p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
+    loadMaze( "../Assets/mazeTest.ppm", scene, p);
+
+    SceneNode chestSN;
+    chestSN.model = new Model( "../Assets/Models/Chest/treasure_chest.obj" );
+    chestSN.modelMatrix = glm::translate( chestSN.modelMatrix, glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z));
+    chestSN.modelMatrix = glm::scale( chestSN.modelMatrix, glm::vec3(0.1,0.1,0.1));
+    scene.push_back(chestSN);
+
+    chest* aChest = new chest( chestSN.model, chestSN.modelMatrix, chest::Type::GOLD, 100 );
+    
+    modelManager& manager = modelManager::getInstance();
+    manager.getModels().push_back( new Model( "../Assets/Models/Chest/treasure_chest.obj" ) );
+    manager.getModels().push_back( new Model( "../Assets/Models/Wall/wall.obj" ));
+
+    shader* s = new shader("../Shaders/simpleLight" );
     
     float last = 0.0f;
     float deltaTime = 0.0f;
@@ -379,8 +461,7 @@ int game::mainLoop()
         glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
         glClearDepth(1);        
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
-        shader* s = new shader("../Shaders/simpleLight" );
+        
         s->init();
         s->use();
         // Transformation matrices
@@ -397,25 +478,17 @@ int game::mainLoop()
         glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].diffuse"), 1.0f, 1.0f, 1.0f); 
         glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].specular"), 1.0f, 1.0f, 1.0f);
         glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].constant"), 1.0f);
-        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].linear"), 0.009);
-        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].quadratic"), 0.0032);  
+        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].linear"), 0.0005);   //0.7);
+        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].quadratic"), 0.00005);  // 1.8);  
 
-        drawScene(scene, s);
-
-#if 0      
-// Draw the loaded model
-        glm::mat4 model;
-        model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f)); // Translate it down a bit so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f)); // It's a bit too big for our scene, so scale it down
-        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(glGetUniformLocation(s->getProgram(), "normalMapping"), GL_FALSE);
-        //  m->Draw(*s);
- #endif       
+        drawScene(scene, s);               
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }
 
     // Deaalowing and cleaning app
+    delete s;
+    delete p;
     SDL_DestroyWindow(window);
     SDL_Quit();
     return(0);

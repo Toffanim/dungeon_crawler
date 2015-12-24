@@ -30,4 +30,22 @@ void camera::updateCameraVectors()
     // Also re-calculate the Right and Up vector
     //right = glm::normalize(glm::cross(this->front, up));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     //up    = glm::normalize(glm::cross(right, this->front));
+
+}
+
+void camera::addYaw(float value)
+{
+    yaw += value;
+    updateCameraVectors();
+}
+
+
+void camera::addPitch( float value )
+{
+    pitch += value;
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+    updateCameraVectors();
 }

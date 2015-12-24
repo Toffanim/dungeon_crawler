@@ -2,7 +2,7 @@
 
 #Moteur
 -Implémenter les lumières :
-    -pour le moment uniquement une directional light en position de la caméra
+    -pour le moment uniquement un point light en position de la caméra
     -maybe la mettre en avant du player et faire une espece de boule magique (bloom)
 -Implémenter des mobs
 -Implémenter de l'eau
@@ -10,8 +10,10 @@
     -Sera fait avec un simple AABB
 
 -Implémenter parrallax/normal/displacement mapping
-    -normal mapping done
+    -normal mapping done <= almost, ne marche pas vraiment, il faut bugfix
 -Implementer assetManager (Textures, models, etc)
+-Implémenter la class Actor : un player, un objet, un wall, etc, sont des actors
+un actor a une position, un model, une fonction isColliding(Actor), une fonction onCollision(Actor), etc
 
     #Gameplay
 

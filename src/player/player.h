@@ -15,6 +15,7 @@
 #include <SDL2/SDL.h>
 #include <map>
 #include <glm/glm.hpp>
+//#include "../actor/actor.h"
 
 class player
 {
@@ -45,6 +46,9 @@ public:
     std::map<SDL_Keycode, std::string> getMapping(){return(mapping);}
     controller* getController(){return(c);}
     camera* getCamera(){return(cam);}
+    void setPosition( glm::vec3 p ) { position = p; updateCamera();}
+    glm::vec3 getPosition(){return(position);}
+
 private:
     SDL_Keycode forwardKey;
     SDL_Keycode backwardKey;
@@ -64,10 +68,13 @@ private:
     glm::vec3 position;
     controller* c;
     camera* cam;
-    Model* model;
+//    Model* model;
 
     float lastX;
     float lastY;
+
+//    AABB aabb;
+    // void computeAABB();
 };
 
 #endif

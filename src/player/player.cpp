@@ -10,7 +10,7 @@
 player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode rightKey, SDL_Keycode leftKey) :
         forwardKey(forwardKey), backwardKey(backwardKey), rightKey(rightKey), leftKey(leftKey),
         moveForward(false), moveRight(false), moveLeft(false), moveBackward(false),
-        speed(6.0f), position( glm::vec3( 0.0f, 0.0f, 0.0f )),
+        speed(1.0f), position( glm::vec3( 0.0f, 0.0f, 0.0f )),
         lastX(0.0f), lastY(0.0f), firstTime(true)
 {
 //    model = new Model( "Alien_Necromorph/Alien_Necromorph.obj" );
@@ -36,6 +36,9 @@ player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode righ
         std::function<void(int, int)> f = std::bind(&player::mouseMotion, this, std::placeholders::_1, std::placeholders::_2);
         c->setMouseCallback(f);
         cam = new camera( position );
+        
+        //aabb.min = glm::vec3(0.0f,0.0f,0.0f);
+        //aabb.max = glm::vec3(0.0f,0.0f,0.0f);
 }
 
 void player::startMoveUp()
@@ -136,6 +139,7 @@ void player::move(float deltaTime)
         pos -= speed*deltaTime*u;
     }
     position = pos;
+    //computeAABB();
     updateCamera();
 }
 
@@ -157,11 +161,17 @@ void player::mouseMotion(int x, int y)
 
     cam->addYaw( t1 );
     cam->addPitch( t2 );
-
-/*    if(pitch > 89.0f)
-        pitch = 89.0f;
-    if(pitch < -89.0f)
-    pitch = -89.0f; */
-
     cam->updateCameraVectors();    
 }
+
+/*
+void player::computeAABB()
+{
+    float halfSize = 0.2;
+    aabb.max.x = position.x + halfSize;
+    aabb.max.y = position.y + halfSize;
+    aabb.max.z = position.z + halfSize;
+    aabb.min.x = position.x - halfSize;
+    aabb.min.y = position.y - halfSize;
+    aabb.min.z = 0.0f;
+    }*/

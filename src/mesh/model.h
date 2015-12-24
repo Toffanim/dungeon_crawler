@@ -19,8 +19,8 @@
 using namespace std;
 // GL Includes
 #include <GL/glew.h> // Contains all the necessery OpenGL includes
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -37,6 +37,7 @@ public:
     // Draws the model, and thus all its meshes
     void Draw(shader shader);
     vector<Texture> textures_loaded;
+    vector<Mesh> getMeshes() { return(meshes); }
 private:
     /*  Model Data  */
     vector<Mesh> meshes;
