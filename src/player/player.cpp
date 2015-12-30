@@ -161,6 +161,13 @@ void player::move(float deltaTime)
     {
         pos -= speed*deltaTime*u;
     }
+
+    if(position != pos)
+    {
+        cout << "player pos : " << position.x << " " << position.y << " " << position.z << endl;
+    }
+
+    
     position = pos;
     computeAABB();
     updateCamera();

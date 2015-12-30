@@ -30,7 +30,7 @@ public :
     void setPosition( glm::mat4 newModelMatrix ) { modelMatrix = newModelMatrix; computeAABB();}
     AABB& getAABB(){return(aabb);}
 
-virtual void doCollision( player* p, float deltaTime = 0.0f ) = 0;
+    virtual void doCollision( player* p, float deltaTime ) = 0;
 private :
     glm::mat4 modelMatrix;
     Model* model;
