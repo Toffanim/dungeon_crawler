@@ -15,6 +15,7 @@ class chest : public actor
 public :
     enum Type { GOLD, LIFE };
     chest( Model* model, glm::mat4 modelMatrix, Type type, int gift);
+    void doCollision(player* p, float deltaTime );
 private :
     int gift;
     Type type;

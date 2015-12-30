@@ -9,13 +9,13 @@
 
 #define ACTOR_H
 #include <string>
+#include <algorithm>
+#include <stdlib.h>
+#include "../mesh/aabb.h"
 #include "../mesh/model.h"
+#include "../player/player.h"
 
-struct AABB
-{
-    glm::vec3 min;
-    glm::vec3 max;
-};
+class player;
 
 class actor
 {
@@ -26,8 +26,11 @@ public :
     actor( glm::vec3 position, std::string modelPath);
     
     glm::mat4 getModelMatrix() { return(modelMatrix); }
-    void setPosition( glm::mat4 newModelMatrix ) { modelMatrix = newModelMatrix; }
+    Model* getModel(){return(model);}
+    void setPosition( glm::mat4 newModelMatrix ) { modelMatrix = newModelMatrix; computeAABB();}
+    AABB& getAABB(){return(aabb);}
 
+virtual void doCollision( player* p, float deltaTime = 0.0f ) = 0;
 private :
     glm::mat4 modelMatrix;
     Model* model;

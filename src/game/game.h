@@ -9,6 +9,8 @@
 
 #define GAME_H
 
+#include <map>
+#include <utility>
 #include <stdlib.h>
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -23,6 +25,10 @@
 #include <cfloat>
 #include "../managers/modelManager.h"
 #include "../actor/chest.h"
+#include "../actor/wall.h"
+#include "../text/text.h"
+#include "../actor/door.h"
+#include "../actor/monster.h"
 
 class game
 {

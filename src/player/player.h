@@ -15,7 +15,7 @@
 #include <SDL2/SDL.h>
 #include <map>
 #include <glm/glm.hpp>
-//#include "../actor/actor.h"
+#include "../actor/actor.h"
 
 class player
 {
@@ -24,7 +24,9 @@ public:
            SDL_Keycode backwardKey = SDLK_s,
            SDL_Keycode rightKey = SDLK_q,
            SDL_Keycode leftKey = SDLK_d);
+    ~player();
 
+    
     void mouseMoveCallback( int x, int y );
     void startMoveForward();
     void startMoveBackward();
@@ -43,12 +45,26 @@ public:
     void updateCamera();
     void mouseMotion(int x, int y);
 
+    bool isAttacking( float deltaTime );
+
+    void addLife( int value ) { life += value; }
+    void addGold( int value ) { gold += value; }
+    int getGold() { return(gold);}
+    int getLife() { return(life);}
+    
     std::map<SDL_Keycode, std::string> getMapping(){return(mapping);}
     controller* getController(){return(c);}
     camera* getCamera(){return(cam);}
     void setPosition( glm::vec3 p ) { position = p; updateCamera();}
     glm::vec3 getPosition(){return(position);}
+    AABB& getAABB(){return(aabb);}
 
+    bool getMoveLeft() { return(moveLeft);}
+    bool getMoveRight() { return(moveRight); }
+    bool getMoveForward() { return(moveForward); }
+    bool getMoveBackward() { return(moveBackward); }
+
+    int getAttack() { return(atk); }
 private:
     SDL_Keycode forwardKey;
     SDL_Keycode backwardKey;
@@ -62,6 +78,9 @@ private:
     bool moveUp;
     bool moveDown;
     bool firstTime;
+
+    int life;
+    int gold;
     
     std::map<SDL_Keycode, std::string> mapping;
     float speed;
@@ -73,8 +92,12 @@ private:
     float lastX;
     float lastY;
 
-//    AABB aabb;
-    // void computeAABB();
+    float atkPerSec;
+    int atk;
+    float lastAttack;
+    
+    AABB aabb;
+    void computeAABB();
 };
 
 #endif

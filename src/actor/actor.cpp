@@ -18,6 +18,8 @@ void actor::computeAABB()
     
     aabb.min = glm::vec3( FLT_MAX, FLT_MAX, FLT_MAX);
     aabb.max = glm::vec3( FLT_MIN, FLT_MIN, FLT_MIN);
+    //aabb.size = glm::vec3();
+    //aabb.center = glm::vec3();
     vector<Mesh> m = model->getMeshes();
     for( vector<Mesh>::iterator it = m.begin();
          it != m.end();
@@ -37,8 +39,18 @@ void actor::computeAABB()
             if ( vertex.z < aabb.min.z ) { aabb.min.z = vertex.z; }
         }
     }    
-    //glm::vec3 size = glm::vec3(max.x-min.x, max.y-min.y, max.z-min.z);
-    //glm::vec3 center = glm::vec3((min.x+max.x)/2, (min.y+max.y)/2, (min.z+max.z)/2);
+    aabb.size = glm::vec3(aabb.max.x-aabb.min.x, aabb.max.y-aabb.min.y, aabb.max.z-aabb.min.z);
+    aabb.center = glm::vec3((aabb.min.x+aabb.max.x)/2, (aabb.min.y+aabb.max.y)/2, (aabb.min.z+aabb.max.z)/2);
     //glm::mat4 transform =  glm::translate(glm::mat4(1), center)* glm::scale(glm::mat4(1), size);
 
+}
+
+float absmin( float a, float b)
+{
+    float aabs = abs(a);
+    float babs = abs(b);
+    if ( aabs <= babs )
+        return a;
+    else
+        return b;
 }

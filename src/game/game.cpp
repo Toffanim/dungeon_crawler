@@ -1,3 +1,4 @@
+
 /* ========================================================================
    $File: $
    $Date: $
@@ -8,11 +9,13 @@
 #include "game.h"
 #define PI 3.14159265359f
 
-
 using namespace std;
 
-game::game(int width, int height) : screenWidth(width), screenHeight(height)
+game::game(int width, int height) : screenWidth(width),
+                                    screenHeight(height),
+                                    endgame(false)
 {
+    init();
 }
 
 
@@ -78,7 +81,8 @@ int game::init()
     startupGLDiagnostics();
     glEnable(GL_DEPTH_TEST);    // enable Z-buffering 
     glEnable(GL_CULL_FACE);
-    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    
     return(0);
 }
 
@@ -209,69 +213,73 @@ struct room
     int offsetY;
 };
 
-void makeRoom(vector<SceneNode>& scene, room& r)
+void makeRoom(vector<actor*>& scene, room& r)
 {
-    SceneNode node;
-
     // if (wallNorth) ...
     // coord : 1.0 = 1m
     //scal = tileSize
 
+    modelManager& mm = modelManager::getInstance();
+
     int ox = r.offsetX;
     int oy = r.offsetY;
-    //sol
-    node.model = new Model("../Assets/Models/Wall/wall.obj");
-    node.modelMatrix = glm::rotate(node.modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    glm::vec3 position = glm::vec3(ox, oy, 0.1f);
-    node.modelMatrix = glm::translate(node.modelMatrix, position);
-    scene.push_back(node);
 
+    //sol
+    glm::mat4 modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+    glm::vec3 position = glm::vec3(ox, oy, 0.1f);
+    modelMatrix = glm::translate(modelMatrix, position);    
+
+    scene.push_back(
+        new wall( mm.getModels()["wall"], modelMatrix ) );
+    
     //plafond
-    SceneNode n;
-    n.model = node.model;
-    n.modelMatrix = glm::rotate(n.modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+    modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
     position = glm::vec3(ox, -(oy+1)*1.0f, 0.9f);
-    n.modelMatrix = glm::translate( n.modelMatrix, position );
-    scene.push_back(n);
+    modelMatrix = glm::translate( modelMatrix, position );
+    scene.push_back(
+        new wall( mm.getModels()["wall"], modelMatrix) );
 
     if(r.murNord)
     {
-     //mur sud
-    SceneNode node2;
-    node2.model = node.model;
-    node2.modelMatrix = glm::rotate(node2.modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
+    //mur sud
+    modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
     position = glm::vec3(-(ox+1)*1.0f, -0.1f, (-oy));
-    node2.modelMatrix = glm::translate(node2.modelMatrix, position);
-    scene.push_back(node2);
-    }
+    modelMatrix = glm::translate(modelMatrix, position);
+    scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
+}
     //mur nord
     if(r.murSud)
     {
-        SceneNode node3;
-        node3.model = node.model;
-        position = glm::vec3(ox, -0.1f, (oy+1)*1.0f);
-        node3.modelMatrix = glm::translate(node3.modelMatrix, position);
-        scene.push_back(node3);
+        
+    modelMatrix = glm::mat4();
+    position = glm::vec3(ox, -0.1f, (oy+1)*1.0f);
+    modelMatrix = glm::translate(modelMatrix, position);
+    scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
     }
     if(r.murOuest)
     {
-        //mur est
-        SceneNode node4;
-        node4.model = node.model;
-        node4.modelMatrix = glm::rotate( node4.modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        //mur 
+    modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
         position = glm::vec3(oy, -0.1f, -ox);
-        node4.modelMatrix = glm::translate( node4.modelMatrix, position);
-        scene.push_back(node4);
+        modelMatrix = glm::translate( modelMatrix, position);
+        scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
     }
     if(r.murEst)
     {
         //mur ouest
-        SceneNode node5;
-        node5.model = node.model;
-        node5.modelMatrix = glm::rotate( node5.modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
         position = glm::vec3(-(oy+1)*1.0f, -0.1f, (ox+1)*1.0f);
-    node5.modelMatrix = glm::translate( node5.modelMatrix, position);
-    scene.push_back(node5);
+        modelMatrix = glm::translate( modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
     }
 }
 
@@ -282,18 +290,10 @@ bool isColorEquals( glm::vec3 c1, glm::vec3 c2)
     return (false);
 }
 
-void loadMaze( const string &filename, vector<SceneNode>& scene, player* p)
+void loadMaze( const string &filename, vector<actor*>& scene, player* p)
 {
     ImageRGB img;
     load_ppm(img, filename);
-    room r;
-    r.offsetX = 2;
-    r.offsetY = 0;
-    r.murOuest = true;
-    r.murEst = false;
-    r.murNord = true;
-    r.murSud = false;
-    // makeRoom(scene, r);
     for( int i = 0;
          i < img.h;
          ++i)
@@ -375,80 +375,207 @@ void loadMaze( const string &filename, vector<SceneNode>& scene, player* p)
                 }
                 //TODO(marc) : FIX ME !!! + add makeRoom to entry and exit tiles
                 //recul le player de moitier
-                p->setPosition( p->getPosition()- p->getCamera()->getFront());
+                p->setPosition( p->getPosition() );
+
+                room r;
+                r.offsetX = j;
+                r.offsetY = i;
+                r.murOuest = false;
+                r.murEst = false;
+                r.murNord = false;
+                r.murSud = false;
+//check north connexion
+                int nidx = idx-(img.w);
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0)))
+                {
+                    r.murNord = true;
+                    //cout << "mur nord" << endl;
+                }
+                nidx = idx+(img.w);
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
+                {
+                    r.murSud = true;
+                    //cout << "mur sud" << endl;
+                }
+                nidx = idx-1;
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0))) 
+                {
+                    r.murOuest = true;
+                    // cout << "mur ouest" << endl;
+                }
+                nidx = idx+1;
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
+                {
+                    r.murEst = true;
+                    //    cout << "mur est" << endl;
+                }
+                makeRoom(scene,r);
             }
+
+
             if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                 glm::vec3(255,126,0)))
             {
                 //door
                 //NOTE(marc): we should check if door is valid or on image border
                 //to be more accurate.
-                int nidx = idx-1;
+                room r;
+                r.offsetX = j;
+                r.offsetY = i;
+                r.murOuest = false;
+                r.murEst = false;
+                r.murNord = false;
+                r.murSud = false;
+//check north connexion
+                int nidx = idx-(img.w);
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0)))
+                {
+                    r.murNord = true;
+                    //cout << "mur nord" << endl;
+                }
+                nidx = idx+(img.w);
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
+                {
+                    r.murSud = true;
+                    //cout << "mur sud" << endl;
+                }
+                nidx = idx-1;
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0))) 
+                {
+                    r.murOuest = true;
+                    // cout << "mur ouest" << endl;
+                }
+                nidx = idx+1;
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
+                {
+                    r.murEst = true;
+                    //    cout << "mur est" << endl;
+                }
+                makeRoom(scene,r);
+                nidx = idx-1;
                 int nidx2 = idx+1;
-                if(  isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
-                                    glm::vec3(255,126,0))
-                     &&  isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
-                                        glm::vec3(255,126,0)))
+                if(  isColorEquals( glm::vec3 ( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b),
+                                    glm::vec3(0,0,0))
+                     &&  isColorEquals( glm::vec3 ( img.data[nidx2].r, img.data[nidx2].g, img.data[nidx2].b),
+                                        glm::vec3(0,0,0)))
                 {
 //door along x axis
-                    cout << "door x axis" << endl;                    
-                    SceneNode node3;
-                    node3.model = new Model("../Assets/Models/Wall/wall.obj");
+                    cout << "door x axis" << endl;
+                    modelManager& mm = modelManager::getInstance();
                     glm::vec3 position = glm::vec3(j, -0.1f, (i+0.5f)*1.0f);
-                    node3.modelMatrix = glm::translate(node3.modelMatrix, position);
-                    scene.push_back(node3);
+                    glm::mat4 modelMatrix = glm::mat4();
+                    modelMatrix = glm::translate(modelMatrix, position);
+                    
+                    scene.push_back(
+                        new door( mm.getModels()["door"], modelMatrix )); 
                 }
                 else
                 {
-//door along y axis
+                   //door along y axis
                     cout << "door y axis" << endl;
+                    modelManager& mm = modelManager::getInstance();
+                    glm::mat4 modelMatrix = glm::mat4();
+                    modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));         
+                    glm::vec3 position = glm::vec3(-(i+1)*1.0f, -0.1f, (j+0.5)*1.0f);
+                    modelMatrix = glm::translate( modelMatrix, position);
+                    scene.push_back(
+                        new door( mm.getModels()["door"], modelMatrix) );
                 }
-           
             }
-        }        
-        //cout << (int)(*it).r << " | " << (int)(*it).g << " | " << (int)(*it).b << endl;
+        }
     }
-
 }
 
-void drawScene( vector<SceneNode>& scene, shader* shader)
+void drawScene( vector<actor*>& scene, shader* shader)
 {
-    for ( vector<SceneNode>::iterator it = scene.begin();
+    for ( vector<actor*>::iterator it = scene.begin();
     it != scene.end();
     ++it)
     {
         glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "model"),
-        1, GL_FALSE, glm::value_ptr((*it).modelMatrix));
-        (*it).model->Draw(*shader);
+                           1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
+        (*it)->getModel()->Draw(*shader);
+        
+    }
+}
+
+bool AABBtoAABB(const AABB& tBox1, const AABB& tBox2)
+{
+
+//Check if Box1's max is greater than Box2's min and Box1's min is less than Box2's max
+    return(tBox1.max.x > tBox2.min.x &&
+    tBox1.min.x < tBox2.max.x &&
+    tBox1.max.y > tBox2.min.y &&
+    tBox1.min.y < tBox2.max.y &&
+    tBox1.max.z > tBox2.min.z &&
+    tBox1.min.z < tBox2.max.z);
+
+//If not, it will return false
+
+}
+
+void checkCollision(vector<actor*>& scene, player* p, float deltaTime)
+{
+    for( vector<actor*>::iterator it = scene.begin();
+         it != scene.end();
+         ++it)
+    {
+        if ( AABBtoAABB( (*it)->getAABB(), p->getAABB()))
+        {
+            (*it)->doCollision(p, deltaTime);
+        }
     }
 }
 
 int game::mainLoop()
 {
-    vector<SceneNode> scene;
+    vector<actor*> scene;
     player* p = new player();
     p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
     p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
+#if 1
+    modelManager& manager = modelManager::getInstance();
+    manager.getModels().insert(
+        std::pair<std::string, Model*>
+        ("chest", new Model( "../Assets/Models/Chest/treasure_chest.obj")));
+    manager.getModels().insert(
+        std::pair<std::string, Model*>
+        ("wall", new Model( "../Assets/Models/Wall/wall.obj" )));
+    manager.getModels().insert(
+        std::pair<std::string, Model*>
+        ("door", new Model( "../Assets/Models/Door/door.obj" )));
+    manager.getModels().insert(
+        std::pair<std::string, Model*>
+        ("monster", new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" )));
     loadMaze( "../Assets/mazeTest.ppm", scene, p);
 
-    SceneNode chestSN;
-    chestSN.model = new Model( "../Assets/Models/Chest/treasure_chest.obj" );
-    chestSN.modelMatrix = glm::translate( chestSN.modelMatrix, glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z));
-    chestSN.modelMatrix = glm::scale( chestSN.modelMatrix, glm::vec3(0.1,0.1,0.1));
-    scene.push_back(chestSN);
-
-    chest* aChest = new chest( chestSN.model, chestSN.modelMatrix, chest::Type::GOLD, 100 );
+    glm::mat4 modelMatrix = glm::mat4();
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z - 2.0f));
+    modelMatrix = glm::scale( modelMatrix, glm::vec3(0.1,0.1,0.1));    
     
-    modelManager& manager = modelManager::getInstance();
-    manager.getModels().push_back( new Model( "../Assets/Models/Chest/treasure_chest.obj" ) );
-    manager.getModels().push_back( new Model( "../Assets/Models/Wall/wall.obj" ));
-
+    chest* aChest = new chest( manager.getModels()["chest"], modelMatrix, chest::Type::GOLD, 100 );
+    monster* m = new monster( manager.getModels()["monster"], modelMatrix,
+                              glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z - 2.0f), 2.0);
+    scene.push_back(m);    
     shader* s = new shader("../Shaders/simpleLight" );
+    s->init();
+    shader* ss = new shader("../Shaders/simple" );
+    ss->init();
+    text* test = new text( "DEFAULT", glm::vec2(0.0,0.0));
     
     float last = 0.0f;
     float deltaTime = 0.0f;
     float current = 0.0f;
-    
+    #endif
+#if 1    
 // Main loop
     while(!endgame)
     {
@@ -458,15 +585,22 @@ int game::mainLoop()
         p->getController()->processEvents();
         p->move(deltaTime);
 
+        if ( m->isAlive() )
+        {
+            m->checkAggro(p, deltaTime);
+        }
+
+        checkCollision( scene, p, deltaTime);
+        test->setText(std::to_string(p->getLife()));
         glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
         glClearDepth(1);        
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        
-        s->init();
+
         s->use();
         // Transformation matrices
         glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
-        glm::mat4 view = p->getCamera()->getViewMatrix();
+        glm::mat4 view = p->getCamera()->getViewMatrix();        
+        
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(view));
 
@@ -481,14 +615,24 @@ int game::mainLoop()
         glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].linear"), 0.0005);   //0.7);
         glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].quadratic"), 0.00005);  // 1.8);  
 
-        drawScene(scene, s);               
+        drawScene(scene, s);
+
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        ss->use();
+        projection = glm::ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f);
+        glUniformMatrix4fv(glGetUniformLocation(ss->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        test->draw(*ss);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }
-
+#endif
     // Deaalowing and cleaning app
     delete s;
     delete p;
+
     SDL_DestroyWindow(window);
     SDL_Quit();
     return(0);

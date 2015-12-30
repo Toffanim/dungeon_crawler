@@ -6,10 +6,24 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 #include "utils.h"
-#include <iostream>
+
 namespace utils {
     using namespace std;
 
+    //ambiguous call to the std func
+    //that's why i made it
+    float abs(float a)
+    {
+        return a>=0?a:-a; 
+    }
+    float absmin( float a, float b)
+    {
+        float aabs = abs(a);
+        float babs = abs(b);
+        return aabs <= babs ? a : b;
+    }
+
+    
     GLuint TextureFromFile( const char* path, string directory)
     {
         //Generate texture ID and load texture data 

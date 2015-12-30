@@ -1,3 +1,4 @@
+#if !defined(WALL_H)
 /* ========================================================================
    $File: $
    $Date: $
@@ -5,9 +6,17 @@
    $Creator: Casey Muratori $
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
-#include "modelManager.h"
 
-modelManager::modelManager()
-        : models( std::map<std::string, Model*>() )
+#define WALL_H
+#include "../player/player.h"
+#include "actor.h"
+
+class wall : public actor
 {
-}
+public :
+    wall( Model* model, glm::mat4 modelMatrix );
+    void doCollision(player* p, float deltaTime);
+private:
+    bool isInRange;
+};
+#endif

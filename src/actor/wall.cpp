@@ -5,25 +5,15 @@
    $Creator: Casey Muratori $
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
-#include "chest.h"
+#include "wall.h"
 
-chest::chest(Model* model, glm::mat4 modelMatrix, Type type, int gift )
-        : actor( model, modelMatrix ), type(type), gift(gift), isOpen( false )
+wall::wall( Model* model, glm::mat4 modelMatrix)
+        : actor(model, modelMatrix), isInRange(true)
 {
-
 }
 
-void chest::doCollision(player* p, float deltaTime)
+void wall::doCollision(player* p, float deltaTime)
 {
-    if (!isOpen)
-    {
-        if ( type == Type::GOLD )
-            p->addGold( gift );
-        if ( type == Type::LIFE )
-            p->addLife( gift );
-        isOpen = true;
-    }
-
     glm::vec3 t = glm::normalize(p->getCamera()->getFront());
     glm::vec3 v = glm::vec3( t.z, t.y, -t.x);
     glm::vec3 u = glm::cross(t,v);

@@ -10,16 +10,18 @@
 player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode rightKey, SDL_Keycode leftKey) :
         forwardKey(forwardKey), backwardKey(backwardKey), rightKey(rightKey), leftKey(leftKey),
         moveForward(false), moveRight(false), moveLeft(false), moveBackward(false),
-        speed(1.0f), position( glm::vec3( 0.0f, 0.0f, 0.0f )),
-        lastX(0.0f), lastY(0.0f), firstTime(true)
+        speed(2.0f), position( glm::vec3( 0.0f, 0.0f, 0.0f )),
+        lastX(0.0f), lastY(0.0f), firstTime(true), life(100), gold(0),
+        mapping(std::map<SDL_Keycode, std::string>()), atkPerSec( 0.5f ),
+atk( 2 ), lastAttack( 0.0f )
 {
-//    model = new Model( "Alien_Necromorph/Alien_Necromorph.obj" );
-    
+//    model = new Model( "Alien_Necromorph/Alien_Necromorph.
+#if 1           
     mapping.insert( std::pair<SDL_Keycode,std::string>(forwardKey, "moveForward"));
-        mapping.insert( std::pair<SDL_Keycode,std::string>(backwardKey, "moveBackward"));
-        mapping.insert( std::pair<SDL_Keycode,std::string>(rightKey, "moveRight"));
-        mapping.insert( std::pair<SDL_Keycode,std::string>(leftKey, "moveLeft"));
-
+    mapping.insert( std::pair<SDL_Keycode,std::string>(backwardKey, "moveBackward"));
+    mapping.insert( std::pair<SDL_Keycode,std::string>(rightKey, "moveRight"));
+    mapping.insert( std::pair<SDL_Keycode,std::string>(leftKey, "moveLeft"));
+    
         c = new controller();
         c->setKeyPressCallback(forwardKey, std::bind(&player::startMoveForward, this));
         c->setKeyPressCallback(backwardKey, std::bind(&player::startMoveBackward, this));
@@ -36,9 +38,30 @@ player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode righ
         std::function<void(int, int)> f = std::bind(&player::mouseMotion, this, std::placeholders::_1, std::placeholders::_2);
         c->setMouseCallback(f);
         cam = new camera( position );
-        
-        //aabb.min = glm::vec3(0.0f,0.0f,0.0f);
-        //aabb.max = glm::vec3(0.0f,0.0f,0.0f);
+
+        aabb.min = glm::vec3();
+        aabb.max = glm::vec3();
+        aabb.size = glm::vec3();
+        aabb.center = glm::vec3();
+#endif
+}
+
+player::~player()
+{
+    if(c)
+    { delete c; }
+    if(cam)
+    { delete cam; }
+}
+
+bool player::isAttacking( float deltaTime )
+{
+    lastAttack += deltaTime;
+    if ( lastAttack >= atkPerSec)
+    {
+        lastAttack = 0.0f;
+        return true;
+    }return false;
 }
 
 void player::startMoveUp()
@@ -139,7 +162,7 @@ void player::move(float deltaTime)
         pos -= speed*deltaTime*u;
     }
     position = pos;
-    //computeAABB();
+    computeAABB();
     updateCamera();
 }
 
@@ -164,14 +187,17 @@ void player::mouseMotion(int x, int y)
     cam->updateCameraVectors();    
 }
 
-/*
+
 void player::computeAABB()
 {
-    float halfSize = 0.2;
+    float halfSize = 0.2f;
     aabb.max.x = position.x + halfSize;
     aabb.max.y = position.y + halfSize;
     aabb.max.z = position.z + halfSize;
     aabb.min.x = position.x - halfSize;
-    aabb.min.y = position.y - halfSize;
-    aabb.min.z = 0.0f;
-    }*/
+    aabb.min.y = position.y - 0.4f;
+    aabb.min.z = position.z - halfSize;
+
+    aabb.size = glm::vec3(halfSize*2);
+    aabb.center = position;
+}

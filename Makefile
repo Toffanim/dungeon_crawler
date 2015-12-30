@@ -5,13 +5,13 @@
 #Define compiler related vars
 CXX := g++
 CXXFLAGS := -std=c++11
-SDL := -lSDL2 -lGL -lSDL2_image
+SDL := -lSDL2 -lGL -lSDL2_image -lSDL2_ttf
 GLEW := -lGLEW 
 ASSIMP := -lassimp
 
 #Define project related vars
 EXEC := dungeonGL
-MODULES := main actor managers player game camera controller mesh shader utils
+MODULES := main actor text managers player game camera controller mesh shader utils
 SRC_DIR := $(addprefix src/, $(MODULES))
 BUILD_DIR := $(addprefix build/, $(MODULES))
 

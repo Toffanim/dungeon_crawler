@@ -1,4 +1,4 @@
-#if !defined(UTILS_H)
+#if !defined(TEXT_H)
 /* ========================================================================
    $File: $
    $Date: $
@@ -7,20 +7,24 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 
-#define UTILS_H
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string>
+#define TEXT_H
 #include <iostream>
+#include <string>
+#include <glm/glm.hpp>
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-
-namespace utils
+#include <SDL2/SDL_ttf.h>
+#include "../shader/shader.h"
+class text
 {
-    const char* textFileRead( const char *fn );
-    GLuint TextureFromFile( const char* path, std::string directory);
-    float absmin( float a, float b);
+public :
+    text( std::string msg, glm::vec2 position );
+    void draw(shader shader);
+    void setText( std::string newText );
+private:
+    std::string msg;
+    glm::vec2 position;
+    GLuint texture;
+    GLuint textureFromText();
 };
 #endif

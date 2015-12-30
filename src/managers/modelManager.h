@@ -9,6 +9,8 @@
 
 #define MODELMANAGER_H
 
+#include <string>
+#include <map>
 #include "../mesh/model.h"
 
 class modelManager
@@ -20,14 +22,15 @@ public:
         return instance;
     }
 
-    vector<Model *>& getModels()
+    map<std::string, Model *>& getModels()
     { return( models ); }
 
 private:
+    modelManager();
     modelManager(modelManager const&) = delete;
     void operator=(modelManager const&) = delete;
-    vector<Model*> models;
-    modelManager();
+    map<std::string, Model*> models;
+    
 };
 
 #endif
