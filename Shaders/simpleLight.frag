@@ -35,8 +35,11 @@ uniform vec3 viewPos;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform Material material;;
 
+uniform sampler2D shadowMap;
+
 // Function prototypes
 vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, vec3 viewDir);
+float ShadowCalculation(vec3 fragPosition);
 
 void main()
 {    
@@ -51,9 +54,25 @@ void main()
 }
 
 
-// Calculates the color when using a point light.
-vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, vec3 viewDir)
+float ShadowCalculation(vec3 fragPosition)
 {
+    // perform perspective divide
+    vec3 projCoords = fragPosition.xyz;  //  /fragPosition.w;
+    // Transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    // Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    // Get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    // Check whether current frag pos is in shadow
+    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+    //float shadow = 1.0;
+    return shadow;
+    } 
+
+    // Calculates the color when using a point light.
+    vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, vec3 viewDir)
+    {
     vec3 lightDir = normalize(light.position - fragPos);
     // Diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
@@ -70,5 +89,9 @@ vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, v
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
-    return (ambient + diffuse + specular);
+
+    float shadow = ShadowCalculation(fragPos);       
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular));    
+    //vec3 lighting = (diffuse + ambient + specular );
+    return (lighting);
 }

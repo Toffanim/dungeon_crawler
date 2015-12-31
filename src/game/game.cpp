@@ -565,16 +565,44 @@ int game::mainLoop()
     monster* m = new monster( manager.getModels()["monster"], modelMatrix,
                               glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z - 2.0f), 2.0);
     scene.push_back(m);    
-    shader* s = new shader("../Shaders/simpleLight" );
-    s->init();
-    shader* ss = new shader("../Shaders/simple" );
-    ss->init();
+    shader* lightningShader = new shader("../Shaders/simpleLight" );
+    lightningShader->init();
+    shader* textShader = new shader("../Shaders/simple" );
+    textShader->init();
+    shader* depthShader = new shader("../Shaders/simpleDepth");
+    depthShader->init();
+    shader * debugShader = new shader( "../Shaders/debug");
+    debugShader->init();
     text* test = new text( "DEFAULT", glm::vec2(0.0,0.0));
     
     float last = 0.0f;
     float deltaTime = 0.0f;
     float current = 0.0f;
     #endif
+
+    GLuint quadVAO = 0;
+    GLuint quadVBO;
+
+    GLuint depthMapFBO;
+    glGenFramebuffers( 1 , &depthMapFBO );
+
+    const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+    GLuint depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 
+        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #if 1    
 // Main loop
     while(!endgame)
@@ -596,41 +624,91 @@ int game::mainLoop()
         glClearDepth(1);        
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-        s->use();
-        // Transformation matrices
-        glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
-        glm::mat4 view = p->getCamera()->getViewMatrix();        
         
-        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(s->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
+        glm::mat4 view = p->getCamera()->getViewMatrix();
+        glm::mat4 eyeSpace = projection * view;
+        
+        depthShader->use();
+        glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgram(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(eyeSpace));
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        drawScene( scene, depthShader );
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); 
+
+        lightningShader->use();
+        // Transformation matrices        
+        glViewport(0, 0, screenWidth, screenHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+       
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(view));
 
         // Set the lighting uniforms
-        glUniform3f(glGetUniformLocation(s->getProgram(), "viewPos"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "viewPos"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
         // Point light 1
-        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].position"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);     
-        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].ambient"), 0.05f, 0.05f, 0.05f);       
-        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].diffuse"), 1.0f, 1.0f, 1.0f); 
-        glUniform3f(glGetUniformLocation(s->getProgram(), "pointLights[0].specular"), 1.0f, 1.0f, 1.0f);
-        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].constant"), 1.0f);
-        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].linear"), 0.0005);   //0.7);
-        glUniform1f(glGetUniformLocation(s->getProgram(), "pointLights[0].quadratic"), 0.00005);  // 1.8);  
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].position"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);     
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].ambient"), 0.05f, 0.05f, 0.05f);       
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].diffuse"), 1.0f, 1.0f, 1.0f); 
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].specular"), 1.0f, 1.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].constant"), 1.0f);
+        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].linear"), 0.0005);   //0.7);
+        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].quadratic"), 0.00005);  // 1.8);  
 
-        drawScene(scene, s);
+        GLint maxTex;
+        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTex);
+        glActiveTexture(--maxTex);
+        glUniform1i(glGetUniformLocation(lightningShader->getProgram(), "shadowMap"), maxTex); 
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        drawScene(scene, lightningShader);
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
-        ss->use();
+        textShader->use();
         projection = glm::ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f);
-        glUniformMatrix4fv(glGetUniformLocation(ss->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        test->draw(*ss);
+        glUniformMatrix4fv(glGetUniformLocation(textShader->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        test->draw(*textShader);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        debugShader->use();
+        glUniform1f(glGetUniformLocation(debugShader->getProgram(), "near_plane"), 0.1f );
+        glUniform1f(glGetUniformLocation(debugShader->getProgram(), "far_plane"), 100.0f);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        if (quadVAO == 0)
+        {
+            GLfloat quadVertices[] = {
+                // Positions        // Texture Coords
+                -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+                1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+                1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+            };
+            // Setup plane VAO
+            glGenVertexArrays(1, &quadVAO);
+            glGenBuffers(1, &quadVBO);
+            glBindVertexArray(quadVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+        }
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glBindVertexArray(0);
+        
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }
 #endif
     // Deaalowing and cleaning app
-    delete s;
+    delete lightningShader;
     delete p;
 
     SDL_DestroyWindow(window);
