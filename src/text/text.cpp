@@ -9,7 +9,7 @@
 using namespace std;
 
 text::text( std::string msg, glm::vec2 position)
-        :msg(msg), position(position)
+        :msg(msg), position(position), width(0.0f), height(0.0f)
 {
     texture = textureFromText();
 }
@@ -19,30 +19,20 @@ void text::setText( std::string newText )
     if ( newText != msg )
     {
         msg = newText;
-        cout << "set newText :" << msg << endl;
         texture = textureFromText();
     }
 }
 
 void text::draw(shader shader)
 {
-    int Width = 100;
-    int Height = 50;
-    // Set up vertex data (and buffer(s)) and attribute pointers
-    /*  GLfloat vertices[] = {
-    // Positions          // Colors           // Texture Coords
-    0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // Top Right
-    0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // Bottom Right
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // Bottom Left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // Top Left 
-    };
-    */
+    int Width = width;
+    int Height = height;
     GLfloat vertices[] = {
-        // Positions          // Colors           // Texture Coords
-        position.x + Width,  position.y, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // Top Right
+        // Positions                                     // Colors           // Texture Coords
+        position.x + Width,  position.y, 0.0f,           1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // Top Right
         position.x + Width, position.y + Height, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // Bottom Right
-        position.x, position.y + Height, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // Bottom Left
-        position.x, position.y, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // Top Left 
+        position.x, position.y + Height, 0.0f,           0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // Bottom Left
+        position.x, position.y, 0.0f,                    1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // Top Left 
     };
 
 
@@ -90,7 +80,7 @@ GLuint text::textureFromText()
     GLuint textureID;
     if( TTF_Init() == -1)
         cout << "probleme init ttf" << endl;
-    TTF_Font* f = TTF_OpenFont( "../Assets/Fonts/angelina.TTF", 100);
+    TTF_Font* f = TTF_OpenFont( "../Assets/Fonts/Roboto-Regular.ttf", 100);
     if (!f)
         cout << "probleme font" << endl;
     SDL_Surface* image = TTF_RenderText_Blended( f, msg.c_str(), {255,255,255,255});
@@ -107,7 +97,7 @@ GLuint text::textureFromText()
     // Format de l'image
     GLenum formatInterne(0);
     GLenum format(0);
-    cout << (int)image->format->BytesPerPixel << endl;
+    
     // Détermination du format et du format interne pour les images à 3 composantes
     if(image->format->BytesPerPixel == 3)
     {
@@ -141,6 +131,9 @@ GLuint text::textureFromText()
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    width = image->w;
+    height = image->h;
     SDL_FreeSurface(image);
     return textureID;
 }

@@ -507,6 +507,13 @@ void drawScene( vector<actor*>& scene, shader* shader)
     }
 }
 
+bool isGLError()
+{
+    if( glGetError() != GL_NO_ERROR )
+        return true;
+    return false;
+}
+
 bool AABBtoAABB(const AABB& tBox1, const AABB& tBox2)
 {
 
@@ -574,6 +581,11 @@ int game::mainLoop()
     shader * debugShader = new shader( "../Shaders/debug");
     debugShader->init();
     text* test = new text( "DEFAULT", glm::vec2(0.0,0.0));
+    //NOTE(marc) : rajouter un sens au texte pour pouvoir mettre la position
+    //dans les coin a droite par exemple
+    //Rajouter aussi une taille au texte (changement au moment du loadfont)
+    //peut etre pouvoir donner une font aussi, peut etre pas util pourn le moment
+    text* framerate_t = new text( "DEFAULT", glm::vec2(700.0, 0.0));
     
     float last = 0.0f;
     float deltaTime = 0.0f;
@@ -581,28 +593,41 @@ int game::mainLoop()
     #endif
 
     GLuint quadVAO = 0;
-    GLuint quadVBO;
+    GLuint quadVBO, quadEBO;
 
     GLuint depthMapFBO;
     glGenFramebuffers( 1 , &depthMapFBO );
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 
     const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
-    GLuint depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 
-        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    GLuint depthMapTex;
+    glGenTextures(1, &depthMapTex);
+    glBindTexture(GL_TEXTURE_2D, depthMapTex);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 
+        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glm::vec4 zeros = glm::vec4( 1.0f, 0.0f, 0.0f, 0.0f );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &zeros.x);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTex, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        cout << "FBO pb" << endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    int framerate = 0;
+
+    glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
+    glClearDepth(1.0);
+
+    GLuint tex = utils::TextureFromFile( "treasure_chest.jpg", "../Assets/Models/Chest" );
+    
 #if 1    
 // Main loop
     while(!endgame)
@@ -610,6 +635,8 @@ int game::mainLoop()
         current = SDL_GetTicks();
         deltaTime = (current - last)/1000;
         last = current;
+        framerate = 1/deltaTime;
+        framerate_t->setText(std::to_string(framerate));
         p->getController()->processEvents();
         p->move(deltaTime);
 
@@ -620,89 +647,140 @@ int game::mainLoop()
 
         checkCollision( scene, p, deltaTime);
         test->setText(std::to_string(p->getLife()));
-        glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
-        glClearDepth(1);        
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
         
-        glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(), (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
+        
+        glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(),
+                                                (float)screenWidth/(float)screenHeight,
+                                                0.1f, 100.0f);
         glm::mat4 view = p->getCamera()->getViewMatrix();
         glm::mat4 eyeSpace = projection * view;
         
         depthShader->use();
-        glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgram(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(eyeSpace));
+        glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgram(), "lightSpaceMatrix"),
+                           1, GL_FALSE, glm::value_ptr(eyeSpace));
+
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
-        drawScene( scene, depthShader );
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); 
+        glEnable(GL_POLYGON_OFFSET_FILL);
 
+        glPolygonOffset(2.5, 10);
+        //glCullFace(GL_FRONT);
+        drawScene( scene, depthShader );
+        glCullFace(GL_BACK);
+        glDisable(GL_POLYGON_OFFSET_FILL);
+  
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        if(isGLError())
+            cout << glGetError() << endl;
+
+        
+        glViewport(0, 0, screenWidth, screenHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        drawScene(scene, depthShader);
+        if(isGLError())
+        cout << "ERROR" << endl;
+        
+#if 1 
         lightningShader->use();
         // Transformation matrices        
         glViewport(0, 0, screenWidth, screenHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
        
-        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "projection"),
+                           1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
+                           1, GL_FALSE, glm::value_ptr(view));
 
         // Set the lighting uniforms
-        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "viewPos"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "viewPos"),
+                    p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
         // Point light 1
-        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].position"), p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);     
-        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].ambient"), 0.05f, 0.05f, 0.05f);       
-        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].diffuse"), 1.0f, 1.0f, 1.0f); 
-        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].specular"), 1.0f, 1.0f, 1.0f);
-        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].constant"), 1.0f);
-        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].linear"), 0.0005);   //0.7);
-        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].quadratic"), 0.00005);  // 1.8);  
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].position"),
+                    p->getCamera()->getPosition().x,
+                    p->getCamera()->getPosition().y,
+                    p->getCamera()->getPosition().z);     
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].ambient"),
+                    0.05f, 0.05f, 0.05f);       
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].diffuse"),
+                    1.0f, 1.0f, 1.0f); 
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].specular"),
+                    1.0f, 1.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].constant"),
+                    1.0f);
+        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].linear"),
+                    0.0005);   //0.7);
+        glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].quadratic"),
+                    0.00005);  // 1.8);  
 
         GLint maxTex;
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTex);
-        glActiveTexture(--maxTex);
+        glActiveTexture(GL_TEXTURE0 + --maxTex);       
         glUniform1i(glGetUniformLocation(lightningShader->getProgram(), "shadowMap"), maxTex); 
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glBindTexture(GL_TEXTURE_2D, depthMapTex);
         drawScene(scene, lightningShader);
 
+        
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
         textShader->use();
         projection = glm::ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f);
-        glUniformMatrix4fv(glGetUniformLocation(textShader->getProgram(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(textShader->getProgram(), "projection"),
+            1, GL_FALSE, glm::value_ptr(projection));
         test->draw(*textShader);
+        framerate_t->draw(*textShader);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+#if 1        
+        GLuint indices[] = {  // Note that we start from 0!
+        0, 1, 3, // First Triangle
+            1, 2, 3  // Second Triangle
+            };
+
+        GLfloat quadVertices[] = {
+        // Positions        // Texture Coords
+        -1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+            -1.0f, 0.5f, 0.0f,    0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+            -0.5f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+            -0.5f, 0.5f, 0.0f,    0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+            };
+        // Setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glGenBuffers(1, &quadEBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        // Position attribute
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(0);
+        // Color attribute
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(1);
+        // TexCoord attribute
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(2);
+
+        glBindVertexArray(0); // Unbind VAO
+       
         debugShader->use();
         glUniform1f(glGetUniformLocation(debugShader->getProgram(), "near_plane"), 0.1f );
         glUniform1f(glGetUniformLocation(debugShader->getProgram(), "far_plane"), 100.0f);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        if (quadVAO == 0)
-        {
-            GLfloat quadVertices[] = {
-                // Positions        // Texture Coords
-                -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-                -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
-                1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
-                1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
-            };
-            // Setup plane VAO
-            glGenVertexArrays(1, &quadVAO);
-            glGenBuffers(1, &quadVBO);
-            glBindVertexArray(quadVAO);
-            glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-            glEnableVertexAttribArray(1);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-        }
+        glBindTexture(GL_TEXTURE_2D, depthMapTex);
+        
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glBindVertexArray(0);
+#endif  
         
+#endif                
         // Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }

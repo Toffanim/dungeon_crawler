@@ -26,6 +26,7 @@ struct PointLight {
 #define NR_POINT_LIGHTS 1
 
 in vec3 fragPosition;
+in vec4 lightFragPosition;
 in vec3 Normal;
 in vec2 TexCoords;
 
@@ -38,8 +39,8 @@ uniform Material material;;
 uniform sampler2D shadowMap;
 
 // Function prototypes
-vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, vec3 viewDir);
-float ShadowCalculation(vec3 fragPosition);
+vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, vec4 lightFragPos, vec3 viewDir);
+float ShadowCalculation(vec4 fragPosition);
 
 void main()
 {    
@@ -48,16 +49,16 @@ void main()
     vec3 norm = normalize(Normal);
     
     for(int i = 0; i < NR_POINT_LIGHTS; i++)
-        result += CalcPointLight(pointLights[i], material, norm, fragPosition, viewDir);
+        result += CalcPointLight(pointLights[i], material, norm, fragPosition, lightFragPosition, viewDir);
         
     color = vec4(result, 1.0f);
 }
 
 
-float ShadowCalculation(vec3 fragPosition)
+float ShadowCalculation(vec4 fragPosition)
 {
     // perform perspective divide
-    vec3 projCoords = fragPosition.xyz;  //  /fragPosition.w;
+    vec3 projCoords = fragPosition.xyz /fragPosition.w;
     // Transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
     // Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
@@ -66,12 +67,11 @@ float ShadowCalculation(vec3 fragPosition)
     float currentDepth = projCoords.z;
     // Check whether current frag pos is in shadow
     float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
-    //float shadow = 1.0;
     return shadow;
     } 
 
     // Calculates the color when using a point light.
-    vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, vec3 viewDir)
+    vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, vec4 lightFragPos, vec3 viewDir)
     {
     vec3 lightDir = normalize(light.position - fragPos);
     // Diffuse shading
@@ -90,7 +90,7 @@ float ShadowCalculation(vec3 fragPosition)
     diffuse *= attenuation;
     specular *= attenuation;
 
-    float shadow = ShadowCalculation(fragPos);       
+    float shadow = ShadowCalculation(lightFragPos);       
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular));    
     //vec3 lighting = (diffuse + ambient + specular );
     return (lighting);

@@ -24,6 +24,8 @@ public :
 private:
     std::string msg;
     glm::vec2 position;
+    float width;
+    float height;
     GLuint texture;
     GLuint textureFromText();
 };
