@@ -3,7 +3,7 @@ mtllib wall.mtl
 
 o quad
 
-usemtl Textured
+usemtl brick
 
 v 0.0 0.0 0.0
 v 0.0 1.0 0.0

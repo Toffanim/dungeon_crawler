@@ -42,6 +42,7 @@ private:
     /*  Model Data  */
     vector<Mesh> meshes;
     string directory;
+    bool hasNormalMaps;
         // Stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
 
     /*  Functions   */

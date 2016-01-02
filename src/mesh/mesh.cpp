@@ -44,7 +44,7 @@ void Mesh::Draw(shader shader)
             ss << normalNr++;
         number = ss.str(); 
         // Now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(shader.getProgram(), (name + number).c_str()), i);
+        glUniform1i(glGetUniformLocation(shader.getProgram(), std::string("material." + (name + number)).c_str()), i);
         // And finally bind the texture
         glBindTexture(GL_TEXTURE_2D, this->textures[i].id);
     }

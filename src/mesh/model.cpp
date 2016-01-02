@@ -9,7 +9,7 @@
 
     /*  Functions   */
     // Constructor, expects a filepath to a 3D model.
-Model::Model(GLchar* path)
+Model::Model(GLchar* path):hasNormalMaps(false)
     {
         this->loadModel(path);
     }
@@ -17,6 +17,7 @@ Model::Model(GLchar* path)
     // Draws the model, and thus all its meshes
 void Model::Draw(shader shader)
     {
+        glUniform1i(glGetUniformLocation( shader.getProgram(), "useNormalMapping" ), hasNormalMaps);
         for(GLuint i = 0; i < this->meshes.size(); i++)
             this->meshes[i].Draw(shader);
     }
@@ -141,8 +142,13 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
             vector<Texture> specularMaps = this->loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
             textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
             //3. Normal maps
-            vector<Texture> normalMaps = this->loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal");
+            vector<Texture> normalMaps = this->loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+            //cout << normalMaps.size() << endl;
             textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+            if ( !normalMaps.empty() )
+            { //cout << "has normals" << endl;
+                hasNormalMaps = true;
+            }
         }
         // Return a mesh object created from the extracted mesh data
         return Mesh(vertices, indices, textures);

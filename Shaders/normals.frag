@@ -30,6 +30,7 @@ out vec4 FragColor;
 in VS_OUT {
     vec2 TexCoords;
     vec3 FragPos;
+    vec3 Normal;
     vec3 TangentLightPos;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
@@ -37,6 +38,7 @@ in VS_OUT {
 
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform Material material;
+uniform bool useNormalMapping;
 
 // Function prototypes
 vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 viewDir);
@@ -44,8 +46,14 @@ vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 viewDir);
 void main()
 {    
      vec3 result;
-     vec3 normal = texture(material.texture_normal1, fs_in.TexCoords).rgb;
-     normal = normalize(normal * 2.0 - 1.0);
+     vec3 normal;
+     if(useNormalMapping)
+     {
+         normal = texture(material.texture_normal1, fs_in.TexCoords).rgb;
+         normal = normalize(normal * 2.0 - 1.0);
+     }
+     else
+         normal = normalize(fs_in.Normal);
     
      vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos); 
      for(int i = 0; i < NR_POINT_LIGHTS; i++)

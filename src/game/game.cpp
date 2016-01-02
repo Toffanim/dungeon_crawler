@@ -52,6 +52,8 @@ int game::init()
     // Set Double Buffer rendering    
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
     // Create SDL Wikndow
     window = SDL_CreateWindow("Dungeon Crawler", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, SDL_WINDOW_SHOWN| SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_GRABBED);
@@ -79,7 +81,8 @@ int game::init()
     }
 
     startupGLDiagnostics();
-    glEnable(GL_DEPTH_TEST);    // enable Z-buffering 
+    glEnable(GL_DEPTH_TEST);    // enable Z-buffering
+    glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    
@@ -306,10 +309,6 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
             if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                 glm::vec3(255,255,255)))
             {
-                //room
-                //cout << "Room" << endl;
-                //cout << idx << endl;
-                //cout << img.data.size()<<endl;
                 room r;
                 r.offsetX = j;
                 r.offsetY = i;
@@ -500,6 +499,7 @@ void drawScene( vector<actor*>& scene, shader* shader)
     it != scene.end();
     ++it)
     {
+        //TODO(marc) : make instancied rendering for walls ?
         glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "model"),
                            1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
         (*it)->getModel()->Draw(*shader);
@@ -573,6 +573,7 @@ int game::mainLoop()
                               glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z - 2.0f), 2.0);
     scene.push_back(m);    
     shader* lightningShader = new shader("../Shaders/simpleLight" );
+    //shader* lightningShader = new shader("../Shaders/normals" );
     lightningShader->init();
     shader* textShader = new shader("../Shaders/simple" );
     textShader->init();
@@ -625,8 +626,6 @@ int game::mainLoop()
 
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
     glClearDepth(1.0);
-
-    GLuint tex = utils::TextureFromFile( "treasure_chest.jpg", "../Assets/Models/Chest" );
     
 #if 1    
 // Main loop

@@ -8,6 +8,7 @@ layout (location = 4) in vec3 bitangent;
 out VS_OUT {
     vec2 TexCoords;
     vec3 FragPos;
+    vec3 Normal;
     vec3 TangentLightPos;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
@@ -25,6 +26,7 @@ void main()
 gl_Position = projection * view * model * vec4(position, 1.0f);
 vs_out.FragPos = vec3(model * vec4(position, 1.0f));
 vs_out.TexCoords = texCoords;    
+vs_out.Normal = mat3(transpose(inverse(model))) * normal;
 
 vec3 T = normalize(vec3(model * vec4(tangent, 0.0)));
 vec3 N = normalize(vec3(model * vec4(normal, 0.0)));
