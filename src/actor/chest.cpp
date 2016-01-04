@@ -8,7 +8,7 @@
 #include "chest.h"
 
 chest::chest(Model* model, glm::mat4 modelMatrix, Type type, int gift )
-        : actor( model, modelMatrix ), type(type), gift(gift), isOpen( false )
+        : actor( model, modelMatrix, "chest" ), giftType(type), gift(gift), isOpen( false )
 {
 
 }
@@ -17,9 +17,9 @@ void chest::doCollision(player* p, float deltaTime)
 {
     if (!isOpen)
     {
-        if ( type == Type::GOLD )
+        if ( giftType == Type::GOLD )
             p->addGold( gift );
-        if ( type == Type::LIFE )
+        if ( giftType == Type::LIFE )
             p->addLife( gift );
         isOpen = true;
     }

@@ -8,7 +8,7 @@
 #include "monster.h"
 
 monster::monster(Model* model, glm::mat4 modelMatrix, glm::vec3 position, float aggroRadius)
-        :actor(model, modelMatrix), aggroRadius(aggroRadius), alive(true), position(position)
+        :actor(model, modelMatrix, "monster"), aggroRadius(aggroRadius), alive(true), position(position)
         ,speed(3.0f), lastAttack( 0.0f ), atkPerSec( 1.0f ), life( 4 )
 {
 }

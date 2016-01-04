@@ -18,6 +18,7 @@ out VS_OUT {
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 invert;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -25,11 +26,12 @@ uniform vec3 viewPos;
 void main()
 {
 
-gl_Position = projection * view * model * vec4(position, 1.0f);
+gl_Position = invert * projection * view * model * vec4(position, 1.0f);
 vs_out.FragPos = vec3(model * vec4(position, 1.0f));
 vs_out.LightFragPosition = projection * view * model * vec4(position, 1.0f);
 vs_out.Normal = mat3(transpose(inverse(model))) * normal;
 vs_out.TexCoords = texCoords;
+
 
 vec3 T = normalize(vec3(model * vec4(tangent, 0.0)));
 vec3 N = normalize(vec3(model * vec4(normal, 0.0)));
@@ -38,7 +40,7 @@ T = normalize(T - dot(T, N) * N);
 // then retrieve perpendicular vector B with the cross product of T and N
 vec3 B = cross(T, N);
 
-mat3 TBN = mat3(T, B, N);  
+mat3 TBN = mat3(-T, B, N);
 vs_out.TangentLightPos = TBN * lightPos;
 vs_out.TangentViewPos  = TBN * viewPos;
 vs_out.TangentFragPos  = TBN * vs_out.FragPos;

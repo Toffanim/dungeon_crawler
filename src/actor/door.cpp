@@ -8,7 +8,7 @@
 #include "door.h"
 
 door::door( Model* model, glm::mat4 modelMatrix)
-        : actor(model,modelMatrix), isOpen(false)
+        : actor(model,modelMatrix, "door"), isOpen(false)
 {
 
 }

@@ -7,8 +7,8 @@
    ======================================================================== */
 #include "actor.h"
 
-actor::actor( Model* model, glm::mat4 modelMatrix)
-        : model(model), modelMatrix(modelMatrix)
+actor::actor( Model* model, glm::mat4 modelMatrix, std::string type)
+        : model(model), modelMatrix(modelMatrix), type(type)
 {
     computeAABB();
 }

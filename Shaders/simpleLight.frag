@@ -44,7 +44,7 @@ uniform sampler2D shadowMap;
 uniform bool useNormalMapping;
 // Function prototypes
 vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, 
-                    vec3 fragPos, vec4 lightFragPos, vec3 viewDir);
+                    vec3 fragPos, vec4 lightFragPos, vec3 viewDir, vec3 lightDir);
 float ShadowCalculation(vec4 fragPosition);
 
 
@@ -73,24 +73,24 @@ vec3 calculateFresnel(vec3 materialSpecular, vec3 normal, vec3 directionFromEye)
 	return materialSpecular + (vec3(1.0) - materialSpecular) * pow (clamp(1.0 + dot(directionFromEye, normal), 0.0, 1.0), 5.0); // TODO #4: calculate fresnel term
 }
 
-
-
 void main()
 {    
     vec3 result;
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);
+    vec3 lightDir = normalize(pointLights[0].position - fs_in.FragPos);
     vec3 norm = normalize(fs_in.Normal);
 
     if(useNormalMapping)
     {
         norm = texture(material.texture_normal1, fs_in.TexCoords).rgb;
         norm = normalize(norm * 2.0 - 1.0);
-     //    color = vec4(1.0f);
+        viewDir = normalize( fs_in.TangentViewPos - fs_in.TangentFragPos );
+        lightDir = normalize(fs_in.TangentLightPos - fs_in.TangentFragPos);
     }
      
      for(int i = 0; i < NR_POINT_LIGHTS; i++)
          result += CalcPointLight(pointLights[i], material, norm, fs_in.FragPos, 
-                              fs_in.LightFragPosition, viewDir);
+                              fs_in.LightFragPosition, viewDir, lightDir);
 
      color = vec4(result, 1.0f);
 }
@@ -112,9 +112,9 @@ float ShadowCalculation(vec4 fragPosition)
 
 // Calculates the color when using a point light.
 vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, 
-                    vec4 lightFragPos, vec3 viewDir)
+                    vec4 lightFragPos, vec3 viewDir, vec3 lightDir)
 {
-     vec3 lightDir = normalize(light.position - fragPos);
+     
      // Attenuation
      float distance = length(light.position - fragPos);
      float attenuation = 1.0f / (light.constant + 
@@ -125,8 +125,7 @@ vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos,
 	float diffuseReflectance = max(0.0, dot(lightDir, normal));
 	float shadow = diffuseReflectance * visibility;  
 
-
-    vec3 lighting = attenuation
+     vec3 lighting = attenuation
                     *( 
                              calculateAmbient( light.ambient, 
                                          vec3(texture(mat.texture_diffuse1, 

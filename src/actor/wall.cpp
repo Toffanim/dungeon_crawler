@@ -8,7 +8,7 @@
 #include "wall.h"
 
 wall::wall( Model* model, glm::mat4 modelMatrix)
-        : actor(model, modelMatrix), isInRange(true)
+        : actor(model, modelMatrix, "wall"), isInRange(true)
 {
 }
 

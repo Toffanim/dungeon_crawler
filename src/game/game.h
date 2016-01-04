@@ -29,6 +29,7 @@
 #include "../text/text.h"
 #include "../actor/door.h"
 #include "../actor/monster.h"
+#include "../actor/water.h"
 
 class game
 {

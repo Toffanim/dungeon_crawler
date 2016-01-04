@@ -1,4 +1,4 @@
-#if !defined(CHEST_H)
+#if !defined(WATER_H)
 /* ========================================================================
    $File: $
    $Date: $
@@ -7,19 +7,14 @@
    $Notice: (C) Copyright 2015 by Molly Rocket, Inc. All Rights Reserved. $
    ======================================================================== */
 
-#define CHEST_H
+#define WATER_H
 #include "actor.h"
 
-class chest : public actor
+class water : public actor
 {
 public :
-    enum Type { GOLD, LIFE };
-    chest( Model* model, glm::mat4 modelMatrix, Type type, int gift);
-    void doCollision(player* p, float deltaTime );
-private :
-    int gift;
-    Type giftType;
-    bool isOpen;
+    water( Model* model, glm::mat4 modelMatrix);
+    void doCollision( player* p, float deltaTime);
 };
 
 #endif

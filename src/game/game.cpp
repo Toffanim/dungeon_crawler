@@ -81,11 +81,12 @@ int game::init()
     }
 
     startupGLDiagnostics();
+    //glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_DEPTH_TEST);    // enable Z-buffering
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
     return(0);
 }
 
@@ -216,6 +217,134 @@ struct room
     int offsetY;
 };
 
+
+void makeWaterRoom(vector<actor*>& scene, room& r, room& r2)
+{
+    // if (wallNorth) ...
+    // coord : 1.0 = 1m
+    //scal = tileSize
+
+    modelManager& mm = modelManager::getInstance();
+
+    int ox = r.offsetX;
+    int oy = r.offsetY;
+
+    //sol
+    
+    glm::mat4 modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+    glm::vec3 position = glm::vec3(ox, oy, 1.0f);
+    modelMatrix = glm::translate(modelMatrix, position);    
+
+    scene.push_back(
+        new wall( mm.getModels()["wall"], modelMatrix ) );
+
+
+    //sol
+    
+    modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+    position = glm::vec3(ox, oy, 0.0f);
+    modelMatrix = glm::translate(modelMatrix, position);    
+
+    scene.push_back(
+        new water(mm.getModels()["water"], modelMatrix ) );
+    
+    //plafond
+    modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+    position = glm::vec3(ox, -(oy+1)*1.0f, 1.0f);
+    modelMatrix = glm::translate( modelMatrix, position );
+    scene.push_back(
+        new wall( mm.getModels()["wall"], modelMatrix) );
+
+
+    if(r2.murNord)
+    {
+    //mur sud
+    modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
+    position = glm::vec3(-(ox+1)*1.0f, -1.0f, (-oy));
+    modelMatrix = glm::translate(modelMatrix, position);
+    scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
+}
+    //mur nord
+    if(r2.murSud)
+    {
+        
+    modelMatrix = glm::mat4();
+    position = glm::vec3(ox, -1.0f, (oy+1)*1.0f);
+    modelMatrix = glm::translate(modelMatrix, position);
+    scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
+    }
+    if(r2.murOuest)
+    {
+        //mur 
+    modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        position = glm::vec3(oy, -1.0f, -ox);
+        modelMatrix = glm::translate( modelMatrix, position);
+        scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
+    }
+    if(r2.murEst)
+    {
+        //mur ouest
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        position = glm::vec3(-(oy+1)*1.0f, -1.0f, (ox+1)*1.0f);
+        modelMatrix = glm::translate( modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
+    }
+
+    
+    if(r.murNord)
+    {
+    //mur sud
+    modelMatrix = glm::mat4();
+    modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
+    position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
+    modelMatrix = glm::translate(modelMatrix, position);
+    scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
+}
+    //mur nord
+    if(r.murSud)
+    {
+        
+    modelMatrix = glm::mat4();
+    position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
+    modelMatrix = glm::translate(modelMatrix, position);
+    scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
+    }
+    if(r.murOuest)
+    {
+        //mur 
+    modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        position = glm::vec3(oy, 0.0f, -ox);
+        modelMatrix = glm::translate( modelMatrix, position);
+        scene.push_back(
+    new wall( mm.getModels()["wall"], modelMatrix) );
+    }
+    if(r.murEst)
+    {
+        //mur ouest
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        position = glm::vec3(-(oy+1)*1.0f, 0.0f, (ox+1)*1.0f);
+        modelMatrix = glm::translate( modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
+    }
+}
+
+
+
 void makeRoom(vector<actor*>& scene, room& r)
 {
     // if (wallNorth) ...
@@ -230,7 +359,7 @@ void makeRoom(vector<actor*>& scene, room& r)
     //sol
     glm::mat4 modelMatrix = glm::mat4();
     modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    glm::vec3 position = glm::vec3(ox, oy, 0.1f);
+    glm::vec3 position = glm::vec3(ox, oy, 0.0f);
     modelMatrix = glm::translate(modelMatrix, position);    
 
     scene.push_back(
@@ -239,7 +368,7 @@ void makeRoom(vector<actor*>& scene, room& r)
     //plafond
     modelMatrix = glm::mat4();
     modelMatrix = glm::rotate(modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    position = glm::vec3(ox, -(oy+1)*1.0f, 0.9f);
+    position = glm::vec3(ox, -(oy+1)*1.0f, 1.0f);
     modelMatrix = glm::translate( modelMatrix, position );
     scene.push_back(
         new wall( mm.getModels()["wall"], modelMatrix) );
@@ -249,7 +378,7 @@ void makeRoom(vector<actor*>& scene, room& r)
     //mur sud
     modelMatrix = glm::mat4();
     modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
-    position = glm::vec3(-(ox+1)*1.0f, -0.1f, (-oy));
+    position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
     modelMatrix = glm::translate(modelMatrix, position);
     scene.push_back(
     new wall( mm.getModels()["wall"], modelMatrix) );
@@ -259,7 +388,7 @@ void makeRoom(vector<actor*>& scene, room& r)
     {
         
     modelMatrix = glm::mat4();
-    position = glm::vec3(ox, -0.1f, (oy+1)*1.0f);
+    position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
     modelMatrix = glm::translate(modelMatrix, position);
     scene.push_back(
     new wall( mm.getModels()["wall"], modelMatrix) );
@@ -269,7 +398,7 @@ void makeRoom(vector<actor*>& scene, room& r)
         //mur 
     modelMatrix = glm::mat4();
         modelMatrix = glm::rotate( modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(oy, -0.1f, -ox);
+        position = glm::vec3(oy, 0.0f, -ox);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
     new wall( mm.getModels()["wall"], modelMatrix) );
@@ -279,12 +408,13 @@ void makeRoom(vector<actor*>& scene, room& r)
         //mur ouest
         modelMatrix = glm::mat4();
         modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(-(oy+1)*1.0f, -0.1f, (ox+1)*1.0f);
+        position = glm::vec3(-(oy+1)*1.0f, 0.0f, (ox+1)*1.0f);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
     }
 }
+
 
 bool isColorEquals( glm::vec3 c1, glm::vec3 c2)
 {
@@ -416,6 +546,91 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
             }
 
 
+
+            if ( isColorEquals( glm::vec3( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+                                glm::vec3(0,0,255)))
+            {
+                room r;
+                r.offsetX = j;
+                r.offsetY = i;
+                r.murOuest = false;
+                r.murEst = false;
+                r.murNord = false;
+                r.murSud = false;
+//check north connexion
+                int nidx = idx-(img.w);
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0)))
+                {
+                    r.murNord = true;
+                    //cout << "mur nord" << endl;
+                }
+                nidx = idx+(img.w);
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
+                {
+                    r.murSud = true;
+                    //cout << "mur sud" << endl;
+                }
+                nidx = idx-1;
+                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,0))) 
+                {
+                    r.murOuest = true;
+                    // cout << "mur ouest" << endl;
+                }
+                nidx = idx+1;
+                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,0))) 
+                {
+                    r.murEst = true;
+                    //    cout << "mur est" << endl;
+                }
+
+                room r2;
+                r2.offsetX = j;
+                r2.offsetY = i;
+                r2.murOuest = false;
+                r2.murEst = false;
+                r2.murNord = false;
+                r2.murSud = false;
+//check north connexion
+                nidx = idx-(img.w);
+                if ( nidx < 0 || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,255)))
+                {
+                    r2.murNord = true;
+                    //cout << "mur nord" << endl;
+                }
+                nidx = idx+(img.w);
+                if ( nidx >= img.data.size() || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,255))) 
+                {
+                    r2.murSud = true;
+                    //cout << "mur sud" << endl;
+                }
+                nidx = idx-1;
+                if ( nidx < 0 || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                glm::vec3(0,0,255))) 
+                {
+                    r2.murOuest = true;
+                    // cout << "mur ouest" << endl;
+                }
+                nidx = idx+1;
+                if ( nidx >= img.data.size() || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                               glm::vec3(0,0,255))) 
+                {
+                    r2.murEst = true;
+                    //    cout << "mur est" << endl;
+                }
+
+                //NOTE(marc) : r2 is for under water
+                makeWaterRoom( scene, r, r2 );
+
+                
+            }
+
+
             if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                 glm::vec3(255,126,0)))
             {
@@ -488,22 +703,36 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
                     scene.push_back(
                         new door( mm.getModels()["door"], modelMatrix) );
                 }
+                
             }
         }
     }
 }
 
-void drawScene( vector<actor*>& scene, shader* shader)
+void drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader)
 {
     for ( vector<actor*>::iterator it = scene.begin();
     it != scene.end();
     ++it)
     {
         //TODO(marc) : make instancied rendering for walls ?
-        glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "model"),
-                           1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
-        (*it)->getModel()->Draw(*shader);
-        
+        if((*it)->getType() == "water")
+        {
+            if(waterShader)
+            {
+                waterShader->use();
+                glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "model"),
+                                   1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
+                (*it)->getModel()->Draw(*waterShader);
+                mainShader->use();
+            }
+        }
+        else
+        {
+            glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgram(), "model"),
+                               1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
+            (*it)->getModel()->Draw(*mainShader);
+        }
     }
 }
 
@@ -562,6 +791,9 @@ int game::mainLoop()
     manager.getModels().insert(
         std::pair<std::string, Model*>
         ("monster", new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" )));
+    manager.getModels().insert(
+        std::pair<std::string, Model*>
+        ("water", new Model( "../Assets/Models/Water/water.obj" )));
     loadMaze( "../Assets/mazeTest.ppm", scene, p);
 
     glm::mat4 modelMatrix = glm::mat4();
@@ -571,9 +803,9 @@ int game::mainLoop()
     chest* aChest = new chest( manager.getModels()["chest"], modelMatrix, chest::Type::GOLD, 100 );
     monster* m = new monster( manager.getModels()["monster"], modelMatrix,
                               glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z - 2.0f), 2.0);
-    scene.push_back(m);    
+    scene.push_back(m);
+    
     shader* lightningShader = new shader("../Shaders/simpleLight" );
-    //shader* lightningShader = new shader("../Shaders/normals" );
     lightningShader->init();
     shader* textShader = new shader("../Shaders/simple" );
     textShader->init();
@@ -581,6 +813,8 @@ int game::mainLoop()
     depthShader->init();
     shader * debugShader = new shader( "../Shaders/debug");
     debugShader->init();
+    shader* waterShader = new shader( "../Shaders/water" );
+    waterShader->init();
     text* test = new text( "DEFAULT", glm::vec2(0.0,0.0));
     //NOTE(marc) : rajouter un sens au texte pour pouvoir mettre la position
     //dans les coin a droite par exemple
@@ -591,7 +825,7 @@ int game::mainLoop()
     float last = 0.0f;
     float deltaTime = 0.0f;
     float current = 0.0f;
-    #endif
+#endif
 
     GLuint quadVAO = 0;
     GLuint quadVBO, quadEBO;
@@ -608,7 +842,7 @@ int game::mainLoop()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 
-        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     glm::vec4 zeros = glm::vec4( 1.0f, 0.0f, 0.0f, 0.0f );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -622,6 +856,33 @@ int game::mainLoop()
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         cout << "FBO pb" << endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    GLuint reflectionFBO, reflectionRBO, reflectionTex;
+    glGenFramebuffers(1, &reflectionFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, reflectionFBO);
+    
+    glGenTextures(1, &reflectionTex);
+    glBindTexture(GL_TEXTURE_2D, reflectionTex);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &zeros.x);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenRenderbuffers(1, &reflectionRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, reflectionRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, reflectionRBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, reflectionTex, 0);
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        cout << "FBO pb" << endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
     int framerate = 0;
 
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
@@ -639,15 +900,15 @@ int game::mainLoop()
         p->getController()->processEvents();
         p->move(deltaTime);
 
-        if ( m->isAlive() )
-        {
-            m->checkAggro(p, deltaTime);
-        }
+        //if ( m->isAlive() )
+        // {
+        //     m->checkAggro(p, deltaTime);
+        // }
 
-        checkCollision( scene, p, deltaTime);
+        //checkCollision( scene, p, deltaTime);
         test->setText(std::to_string(p->getLife()));
         
-        
+
         glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(),
                                                 (float)screenWidth/(float)screenHeight,
                                                 0.1f, 100.0f);
@@ -663,10 +924,9 @@ int game::mainLoop()
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         glEnable(GL_POLYGON_OFFSET_FILL);
-
         glPolygonOffset(2.5, 10);
         //glCullFace(GL_FRONT);
-        drawScene( scene, depthShader );
+        drawScene( scene, depthShader, 0);
         glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
   
@@ -678,24 +938,27 @@ int game::mainLoop()
         glViewport(0, 0, screenWidth, screenHeight);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        drawScene(scene, depthShader);
+        //glDisable(GL_CULL_FACE);
+        drawScene(scene, depthShader, 0);
         if(isGLError())
-        cout << "ERROR" << endl;
+            cout << "ERROR" << endl;
         
 #if 1 
         lightningShader->use();
         // Transformation matrices        
-        glViewport(0, 0, screenWidth, screenHeight);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       
+        
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "projection"),
                            1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(view));
 
+
         // Set the lighting uniforms
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "viewPos"),
                     p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+        glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "lightPos"),
+                    p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+
         // Point light 1
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].position"),
                     p->getCamera()->getPosition().x,
@@ -719,7 +982,45 @@ int game::mainLoop()
         glActiveTexture(GL_TEXTURE0 + --maxTex);       
         glUniform1i(glGetUniformLocation(lightningShader->getProgram(), "shadowMap"), maxTex); 
         glBindTexture(GL_TEXTURE_2D, depthMapTex);
-        drawScene(scene, lightningShader);
+
+
+        glm::mat4 remapping = glm::mat4(
+            glm::vec4(0.5,0.0,0.0,0.5),
+            glm::vec4(0.0,0.5,0.0,0.5),
+            glm::vec4(0.0,0.0,0.5,0.5),
+            glm::vec4(0.0,0.0,0.0,1.0)
+                                        );
+        glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "remapping"),
+                           1, GL_FALSE, glm::value_ptr(remapping));
+            
+
+        glm::mat4 invert = glm::mat4(
+            glm::vec4(1.0,0.0,0.0,0.0),
+            glm::vec4(0.0,-1.0,0.0,0.0),
+            glm::vec4(0.0,0.0,1.0,0.0),
+            glm::vec4(0.0,0.0,0.0,1.0)
+                                     );
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
+                           1, GL_FALSE, glm::value_ptr(invert));
+        
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, reflectionFBO);
+        glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
+        glCullFace(GL_FRONT);
+        drawScene(scene, lightningShader, 0);
+        glCullFace(GL_BACK);
+        
+        invert = glm::mat4(1.0);
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
+                           1, GL_FALSE, glm::value_ptr(invert));
+        
+        glActiveTexture(GL_TEXTURE0 + --maxTex);       
+        glUniform1i(glGetUniformLocation(waterShader->getProgram(), "reflection_texture"), maxTex); 
+        glBindTexture(GL_TEXTURE_2D, reflectionTex);
+        glViewport(0, 0, screenWidth, screenHeight);
+        glBindFramebuffer( GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+        drawScene(scene, lightningShader, waterShader);
 
         
         glDisable(GL_DEPTH_TEST);
@@ -772,7 +1073,7 @@ int game::mainLoop()
         glUniform1f(glGetUniformLocation(debugShader->getProgram(), "near_plane"), 0.1f );
         glUniform1f(glGetUniformLocation(debugShader->getProgram(), "far_plane"), 100.0f);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMapTex);
+        glBindTexture(GL_TEXTURE_2D, reflectionTex);
         
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
