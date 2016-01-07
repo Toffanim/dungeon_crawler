@@ -19,6 +19,13 @@ glm::mat4 camera::getViewMatrix()
     return glm::lookAt(position, position + front, up);
 }
 
+glm::mat4 camera::getRotatedViewMatrix()
+{
+    glm::vec3 rotPos = glm::vec3( position.x, -position.y, position.z);
+    glm::vec3 rotFront = glm::vec3( front.x , -front.y, front.z);
+    return glm::lookAt(  rotPos, rotPos + rotFront, up);
+}
+
 void camera::updateCameraVectors()
 {
     // Calculate the new Front vector

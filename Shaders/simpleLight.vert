@@ -4,6 +4,7 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texCoords;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 bitangent;
+//out float gl_ClipDistance[1]
 
 out VS_OUT {
     vec2 TexCoords;
@@ -22,6 +23,7 @@ uniform mat4 invert;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
+uniform vec4 clipPlane;
 
 void main()
 {
@@ -44,4 +46,7 @@ mat3 TBN = mat3(-T, B, N);
 vs_out.TangentLightPos = TBN * lightPos;
 vs_out.TangentViewPos  = TBN * viewPos;
 vs_out.TangentFragPos  = TBN * vs_out.FragPos;
+
+gl_ClipDistance[0] = dot(model * vec4(position, 1.0f) , clipPlane);
+//gl_ClipDistance[0] = 0;
 }

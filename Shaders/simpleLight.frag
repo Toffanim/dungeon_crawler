@@ -106,7 +106,8 @@ float ShadowCalculation(vec4 fragPosition)
      // Get depth of current fragment from light's perspective
      float currentDepth = projCoords.z;
      // Check whether current frag pos is in shadow
-     float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+float shadow;
+     shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
      return shadow;
 } 
 
@@ -130,7 +131,7 @@ vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos,
                              calculateAmbient( light.ambient, 
                                          vec3(texture(mat.texture_diffuse1, 
                                          fs_in.TexCoords)))
-					 + ( 1.0 - shadow )
+					 + ( 1.0 )
                               * ( 
                                     calculateDiffuse( light.diffuse, 
                                         vec3(texture(mat.texture_diffuse1, fs_in.TexCoords)), 

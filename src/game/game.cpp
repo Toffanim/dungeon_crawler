@@ -245,7 +245,7 @@ void makeWaterRoom(vector<actor*>& scene, room& r, room& r2)
     modelMatrix = glm::mat4();
     modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
     position = glm::vec3(ox, oy, 0.0f);
-    modelMatrix = glm::translate(modelMatrix, position);    
+    modelMatrix = glm::translate(modelMatrix, position);
 
     scene.push_back(
         new water(mm.getModels()["water"], modelMatrix ) );
@@ -282,19 +282,21 @@ void makeWaterRoom(vector<actor*>& scene, room& r, room& r2)
     if(r2.murOuest)
     {
         //mur 
-    modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate( modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(oy, -1.0f, -ox);
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, (-PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate( modelMatrix, (-PI), glm::vec3( 0.0f, 0.0f, 1.0f));
+        position = glm::vec3(-(oy+1), 0.0f, -ox);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
+            new wall( mm.getModels()["wall"], modelMatrix) );
     }
     if(r2.murEst)
     {
         //mur ouest
         modelMatrix = glm::mat4();
         modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(-(oy+1)*1.0f, -1.0f, (ox+1)*1.0f);
+        modelMatrix = glm::rotate( modelMatrix, -(PI), glm::vec3( 0.0f, 0.0f, 1.0f));
+        position = glm::vec3((oy)*1.0f, 0.0f, (ox+1)*1.0f);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
@@ -303,44 +305,48 @@ void makeWaterRoom(vector<actor*>& scene, room& r, room& r2)
     
     if(r.murNord)
     {
-    //mur sud
-    modelMatrix = glm::mat4();
-    modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
-    position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
-    modelMatrix = glm::translate(modelMatrix, position);
-    scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
-}
+        //mur sud
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
+        position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
+        modelMatrix = glm::translate(modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
+    }
     //mur nord
     if(r.murSud)
     {
         
-    modelMatrix = glm::mat4();
-    position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
-    modelMatrix = glm::translate(modelMatrix, position);
-    scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
+        modelMatrix = glm::mat4();
+        position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
+        modelMatrix = glm::translate(modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
     }
     if(r.murOuest)
     {
         //mur 
-    modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate( modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(oy, 0.0f, -ox);
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, (-PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate( modelMatrix, (PI), glm::vec3( 0.0f, 0.0f, 1.0f));
+        position = glm::vec3(-(oy+1), -1.0f, -ox);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
+            new wall( mm.getModels()["wall"], modelMatrix) );
     }
     if(r.murEst)
     {
         //mur ouest
         modelMatrix = glm::mat4();
         modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(-(oy+1)*1.0f, 0.0f, (ox+1)*1.0f);
+        modelMatrix = glm::rotate( modelMatrix, (-PI), glm::vec3( 0.0f, 0.0f, 1.0f));
+        position = glm::vec3((oy)*1.0f, -1.0f, (ox+1)*1.0f);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
     }
+
+
 }
 
 
@@ -375,44 +381,59 @@ void makeRoom(vector<actor*>& scene, room& r)
 
     if(r.murNord)
     {
-    //mur sud
-    modelMatrix = glm::mat4();
-    modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
-    position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
-    modelMatrix = glm::translate(modelMatrix, position);
-    scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
-}
+        //mur sud
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
+        position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
+        modelMatrix = glm::translate(modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
+    }
     //mur nord
     if(r.murSud)
     {
         
-    modelMatrix = glm::mat4();
-    position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
-    modelMatrix = glm::translate(modelMatrix, position);
-    scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
+        modelMatrix = glm::mat4();
+        position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
+        modelMatrix = glm::translate(modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
+    }
+
+        if(r.murSud)
+    {
+        
+        modelMatrix = glm::mat4();
+        position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
+        modelMatrix = glm::translate(modelMatrix, position);
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix) );
     }
     if(r.murOuest)
     {
         //mur 
-    modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate( modelMatrix, -(PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(oy, 0.0f, -ox);
+        modelMatrix = glm::mat4();
+        modelMatrix = glm::rotate( modelMatrix, (-PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate( modelMatrix, (PI), glm::vec3( 0.0f, 0.0f, 1.0f));
+        position = glm::vec3(-(oy+1), -1.0f, -ox);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
+            new wall( mm.getModels()["wall"], modelMatrix) );
     }
     if(r.murEst)
     {
         //mur ouest
         modelMatrix = glm::mat4();
         modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        position = glm::vec3(-(oy+1)*1.0f, 0.0f, (ox+1)*1.0f);
+        modelMatrix = glm::rotate( modelMatrix, (-PI), glm::vec3( 0.0f, 0.0f, 1.0f));
+        position = glm::vec3((oy)*1.0f, -1.0f, (ox+1)*1.0f);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
     }
+    
+
+
 }
 
 
@@ -718,6 +739,22 @@ void drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader)
         //TODO(marc) : make instancied rendering for walls ?
         if((*it)->getType() == "water")
         {
+            
+        }
+        else
+        {
+            glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgram(), "model"),
+                               1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
+            (*it)->getModel()->Draw(*mainShader);
+        }
+    }
+    for ( vector<actor*>::iterator it = scene.begin();
+    it != scene.end();
+    ++it)
+    {
+        //TODO(marc) : make instancied rendering for walls ?
+        if((*it)->getType() == "water")
+        {
             if(waterShader)
             {
                 waterShader->use();
@@ -727,19 +764,17 @@ void drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader)
                 mainShader->use();
             }
         }
-        else
-        {
-            glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgram(), "model"),
-                               1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
-            (*it)->getModel()->Draw(*mainShader);
-        }
+        
     }
+
+    
 }
 
 bool isGLError()
 {
-    if( glGetError() != GL_NO_ERROR )
-        return true;
+    int error = glGetError();
+    if( error != GL_NO_ERROR )
+        return error;
     return false;
 }
 
@@ -815,6 +850,8 @@ int game::mainLoop()
     debugShader->init();
     shader* waterShader = new shader( "../Shaders/water" );
     waterShader->init();
+    shader* blurShader = new shader( "../Shaders/blur" );
+    blurShader->init();
     text* test = new text( "DEFAULT", glm::vec2(0.0,0.0));
     //NOTE(marc) : rajouter un sens au texte pour pouvoir mettre la position
     //dans les coin a droite par exemple
@@ -843,7 +880,7 @@ int game::mainLoop()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 
                  SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    glm::vec4 zeros = glm::vec4( 1.0f, 0.0f, 0.0f, 0.0f );
+    glm::vec4 zeros = glm::vec4( 0.0f, 1.0f, 0.0f, 0.0f );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &zeros.x);
@@ -882,6 +919,29 @@ int game::mainLoop()
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         cout << "FBO pb" << endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    GLuint pingpongFBO[2];
+    GLuint pingpongBuffer[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongBuffer);
+    for (GLuint i = 0; i < 2; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGB16F, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, NULL
+                     );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0
+                               );
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            cout << "FBO pb" << endl;
+    }
+
     
     int framerate = 0;
 
@@ -913,6 +973,7 @@ int game::mainLoop()
                                                 (float)screenWidth/(float)screenHeight,
                                                 0.1f, 100.0f);
         glm::mat4 view = p->getCamera()->getViewMatrix();
+        glm::mat4 rotView = p->getCamera()->getRotatedViewMatrix();
         glm::mat4 eyeSpace = projection * view;
         
         depthShader->use();
@@ -920,12 +981,13 @@ int game::mainLoop()
                            1, GL_FALSE, glm::value_ptr(eyeSpace));
 
 
+        //RENDER SHADOW MAP
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(2.5, 10);
-        //glCullFace(GL_FRONT);
+        glCullFace(GL_FRONT);
         drawScene( scene, depthShader, 0);
         glCullFace(GL_BACK);
         glDisable(GL_POLYGON_OFFSET_FILL);
@@ -934,31 +996,61 @@ int game::mainLoop()
         if(isGLError())
             cout << glGetError() << endl;
 
-        
-        glViewport(0, 0, screenWidth, screenHeight);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        //glDisable(GL_CULL_FACE);
-        drawScene(scene, depthShader, 0);
-        if(isGLError())
-            cout << "ERROR" << endl;
-        
-#if 1 
+        /*
+          glViewport(0, 0, screenWidth, screenHeight);
+          glBindFramebuffer(GL_FRAMEBUFFER, 0);
+          glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+          //glDisable(GL_CULL_FACE);
+          drawScene(scene, depthShader, 0);
+          if(isGLError())
+          cout << "ERROR" << endl;
+        */        
+#if 1
+
+        //SET WATER SHADER UNIFROMS
+        waterShader->use();
+        // Transformation matrices                
+        glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "projection"),
+                           1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "view"),
+                           1, GL_FALSE, glm::value_ptr(view));
+
+        // Set the lighting uniforms
+        glUniform3f(glGetUniformLocation(waterShader->getProgram(), "viewPos"),
+                    p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+        glUniform3f(glGetUniformLocation(waterShader->getProgram(), "lightPos"),
+                    p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
+
+        // Point light 1
+        glUniform3f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].position"),
+                    p->getCamera()->getPosition().x,
+                    p->getCamera()->getPosition().y,
+                    p->getCamera()->getPosition().z);     
+        glUniform3f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].ambient"),
+                    0.05f, 0.05f, 0.05f);       
+        glUniform3f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].diffuse"),
+                    1.0f, 1.0f, 1.0f); 
+        glUniform3f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].specular"),
+                    1.0f, 1.0f, 1.0f);
+        glUniform1f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].constant"),
+                    1.0f);
+        glUniform1f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].linear"),
+                    0.0005);   //0.7);
+        glUniform1f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].quadratic"),
+                    0.00005);  // 1.8)
+
+        //SET LIGHTNING SHADER UNIFORMS
         lightningShader->use();
-        // Transformation matrices        
-        
+        // Transformation matrices                
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "projection"),
                            1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(view));
-
-
         // Set the lighting uniforms
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "viewPos"),
                     p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "lightPos"),
                     p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
-
         // Point light 1
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].position"),
                     p->getCamera()->getPosition().x,
@@ -980,19 +1072,9 @@ int game::mainLoop()
         GLint maxTex;
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTex);
         glActiveTexture(GL_TEXTURE0 + --maxTex);       
-        glUniform1i(glGetUniformLocation(lightningShader->getProgram(), "shadowMap"), maxTex); 
-        glBindTexture(GL_TEXTURE_2D, depthMapTex);
-
-
-        glm::mat4 remapping = glm::mat4(
-            glm::vec4(0.5,0.0,0.0,0.5),
-            glm::vec4(0.0,0.5,0.0,0.5),
-            glm::vec4(0.0,0.0,0.5,0.5),
-            glm::vec4(0.0,0.0,0.0,1.0)
-                                        );
-        glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "remapping"),
-                           1, GL_FALSE, glm::value_ptr(remapping));
-            
+        glUniform1i(glGetUniformLocation(lightningShader->getProgram(), "shadowMap"), maxTex);
+        glUniform1i(glGetUniformLocation(waterShader->getProgram(), "shadowMap"), maxTex);
+        glBindTexture(GL_TEXTURE_2D, depthMapTex);          
 
         glm::mat4 invert = glm::mat4(
             glm::vec4(1.0,0.0,0.0,0.0),
@@ -1002,52 +1084,130 @@ int game::mainLoop()
                                      );
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
                            1, GL_FALSE, glm::value_ptr(invert));
-        
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
+                           1, GL_FALSE, glm::value_ptr(rotView));
+        glm::vec4 plane = glm::vec4( 0.0 , 1.0 , 0.0, 0.0 );
+        glUniform4f(glGetUniformLocation(lightningShader->getProgram(), "clipPlane"),
+                    plane.x, plane.y, plane.z, plane.w);   
+
+        //RENDER WATER REFLECTION
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, reflectionFBO);
         glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
         glCullFace(GL_FRONT);
+        glEnable(GL_CLIP_DISTANCE0);
         drawScene(scene, lightningShader, 0);
         glCullFace(GL_BACK);
+
+#if 1
+        //BLUR
+        GLboolean horizontal = true, first_iteration = true;
+        GLuint amount = 20;
+        GLuint _quadVBO, _quadVAO, _quadEBO;
+        blurShader->use();
+        glActiveTexture(GL_TEXTURE0);
+        glViewport(0, 0, screenWidth, screenHeight);
+        for (GLuint i = 0; i < amount; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]); 
+            glUniform1i(glGetUniformLocation(blurShader->getProgram(), "horizontal"), horizontal);
+            glBindTexture(
+                GL_TEXTURE_2D, first_iteration ? reflectionTex : pingpongBuffer[!horizontal]  ); 
+            GLuint indices[] = {  // Note that we start from 0!
+                0, 1, 3, // First Triangle
+                1, 2, 3  // Second Triangle
+            };
+
+            GLfloat quadVertices[] = {
+                // Positions                                 // Texture Coords
+                -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f,    0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+                1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+                1.0f, -1.0f, 0.0f,    0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+            };
+            // Setup plane VAO
+            glGenVertexArrays(1, &_quadVAO);
+            glGenBuffers(1, &_quadVBO);
+            glGenBuffers(1, &_quadEBO);
+            glBindVertexArray(_quadVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, _quadVBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _quadEBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+            // Position attribute
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+            glEnableVertexAttribArray(0);
+            // Color attribute
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(1);
+            // TexCoord attribute
+            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(2);
+
+            glBindVertexArray(_quadVAO);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+            glBindVertexArray(0); // Unbind VAO
         
+            horizontal = !horizontal;
+            if (first_iteration)
+                first_iteration = false;
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
+
+#if 1
+        lightningShader->use();
         invert = glm::mat4(1.0);
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
                            1, GL_FALSE, glm::value_ptr(invert));
-        
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
+                           1, GL_FALSE, glm::value_ptr(view));
+        plane = glm::vec4( 0.0 , 1.0 , 0.0, 200.0 );
+        glUniform4f(glGetUniformLocation(lightningShader->getProgram(), "clipPlane"),
+                    plane.x, plane.y, plane.z, plane.w);
+        glUniform4f(glGetUniformLocation(waterShader->getProgram(), "clipPlane"),
+                    plane.x, plane.y, plane.z, plane.w);
+
+        waterShader->use();
         glActiveTexture(GL_TEXTURE0 + --maxTex);       
         glUniform1i(glGetUniformLocation(waterShader->getProgram(), "reflection_texture"), maxTex); 
-        glBindTexture(GL_TEXTURE_2D, reflectionTex);
+        glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
+        lightningShader->use();
+
+        //RENDER SCENE
         glViewport(0, 0, screenWidth, screenHeight);
         glBindFramebuffer( GL_FRAMEBUFFER, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         drawScene(scene, lightningShader, waterShader);
 
-        
+        //RENDER TEXT
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
         textShader->use();
         projection = glm::ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f);
         glUniformMatrix4fv(glGetUniformLocation(textShader->getProgram(), "projection"),
-            1, GL_FALSE, glm::value_ptr(projection));
+                           1, GL_FALSE, glm::value_ptr(projection));
         test->draw(*textShader);
         framerate_t->draw(*textShader);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
+#endif
 
-
-#if 1        
+#if 0
+        //DEBUG DISPLAY
         GLuint indices[] = {  // Note that we start from 0!
-        0, 1, 3, // First Triangle
+            0, 1, 3, // First Triangle
             1, 2, 3  // Second Triangle
-            };
+        };
 
         GLfloat quadVertices[] = {
-        // Positions        // Texture Coords
-        -1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+            // Positions        // Texture Coords
+            -1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
             -1.0f, 0.5f, 0.0f,    0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
             -0.5f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
             -0.5f, 0.5f, 0.0f,    0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
-            };
+        };
         // Setup plane VAO
         glGenVertexArrays(1, &quadVAO);
         glGenBuffers(1, &quadVBO);
@@ -1073,7 +1233,7 @@ int game::mainLoop()
         glUniform1f(glGetUniformLocation(debugShader->getProgram(), "near_plane"), 0.1f );
         glUniform1f(glGetUniformLocation(debugShader->getProgram(), "far_plane"), 100.0f);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, reflectionTex);
+        glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal] );
         
         glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
