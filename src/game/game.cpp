@@ -95,112 +95,6 @@ void game::close()
     endgame = true;
 }
 
-struct RGB
-{
-    unsigned char r, g, b;
-};
-
-struct ImageRGB
-{
-    int w, h;
-    vector<RGB> data;
-};
-
-void eat_comment(ifstream &f)
-{
-    char linebuf[1024];
-    char ppp;
-    while (ppp = f.peek(), ppp == '\n' || ppp == '\r')
-        f.get();
-    if (ppp == '#')
-        f.getline(linebuf, 1023);
-}
-
-void load_ppm(ImageRGB &img, const string &name)
-{
-    ifstream f(name.c_str(), ios::binary);
-    if (f.fail())
-    {
-        cout << "Could not open file: " << name << endl;
-        return;
-    }
-
-    // get type of file
-    eat_comment(f);
-    int mode = 0;
-    string s;
-    f >> s;
-    if (s == "P3")
-        mode = 3;
-    else if (s == "P6")
-        mode = 6;
-    
-    // get w
-    eat_comment(f);
-    f >> img.w;
-
-    // get h
-    eat_comment(f);
-    f >> img.h;
-    
-    // get bits
-    eat_comment(f);
-    int bits = 0;
-    f >> bits;
-    
-    // error checking
-    if (mode != 3 && mode != 6)
-    {
-        cout << "Unsupported magic number" << endl;
-        f.close();
-        return;
-    }
-    if (img.w < 1)
-    {
-        cout << "Unsupported width: " << img.w << endl;
-        f.close();
-        return;
-    }
-    if (img.h < 1)
-    {
-        cout << "Unsupported height: " << img.h << endl;
-        f.close();
-        return;
-    }
-    if (bits < 1 || bits > 255)
-    {
-        cout << "Unsupported number of bits: " << bits << endl;
-        f.close();
-        return;
-    }
-
-    // load image data
-    img.data.resize(img.w * img.h);
-
-    if (mode == 6)
-    {
-        f.get();
-        f.read((char*)&img.data[0], img.data.size() * 3);
-    }
-    else if (mode == 3)
-    {
-        for (unsigned int i = 0; i < img.data.size(); i++)
-        {
-            int v;
-            f >> v;
-            img.data[i].r = v;
-            f >> v;
-            img.data[i].g = v;
-            f >> v;
-            img.data[i].b = v;
-        }
-    }
-
-    // close file
-    f.close();
-}
-
-
 struct SceneNode
 {
     Model* model;
@@ -213,102 +107,53 @@ struct room
     bool murEst;
     bool murOuest;
     bool murNord;
+    bool ceil;
+    bool floor;
     int offsetX;
     int offsetY;
 };
 
 
-void makeWaterRoom(vector<actor*>& scene, room& r, room& r2)
+void makeRoom(vector<actor*>& scene, room& r, float depth, bool waterRoom)
 {
-    // if (wallNorth) ...
-    // coord : 1.0 = 1m
-    //scal = tileSize
-
     modelManager& mm = modelManager::getInstance();
 
     int ox = r.offsetX;
     int oy = r.offsetY;
 
-    //sol
-    
+    //sol    
+
     glm::mat4 modelMatrix = glm::mat4();
     modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    glm::vec3 position = glm::vec3(ox, oy, 1.0f);
+    glm::vec3 position = glm::vec3(ox, oy, depth);
     modelMatrix = glm::translate(modelMatrix, position);    
-
-    scene.push_back(
-        new wall( mm.getModels()["wall"], modelMatrix ) );
-
-
-    //sol
-    
-    modelMatrix = glm::mat4();
-    modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    position = glm::vec3(ox, oy, 0.0f);
-    modelMatrix = glm::translate(modelMatrix, position);
-
-    scene.push_back(
-        new water(mm.getModels()["water"], modelMatrix ) );
-    
-    //plafond
-    modelMatrix = glm::mat4();
-    modelMatrix = glm::rotate(modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    position = glm::vec3(ox, -(oy+1)*1.0f, 1.0f);
-    modelMatrix = glm::translate( modelMatrix, position );
-    scene.push_back(
-        new wall( mm.getModels()["wall"], modelMatrix) );
-
-
-    if(r2.murNord)
+    if ( !waterRoom)
     {
-    //mur sud
-    modelMatrix = glm::mat4();
-    modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
-    position = glm::vec3(-(ox+1)*1.0f, -1.0f, (-oy));
-    modelMatrix = glm::translate(modelMatrix, position);
-    scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
-}
-    //mur nord
-    if(r2.murSud)
-    {
-        
-    modelMatrix = glm::mat4();
-    position = glm::vec3(ox, -1.0f, (oy+1)*1.0f);
-    modelMatrix = glm::translate(modelMatrix, position);
-    scene.push_back(
-    new wall( mm.getModels()["wall"], modelMatrix) );
+        scene.push_back(
+            new wall( mm.getModels()["wall"], modelMatrix ) );
     }
-    if(r2.murOuest)
+    else
     {
-        //mur 
+        scene.push_back(
+            new water( mm.getModels()["water"], modelMatrix ) );
+    }
+
+    if (r.ceil)
+    {
+        //plafond
         modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate( modelMatrix, (-PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        modelMatrix = glm::rotate( modelMatrix, (-PI), glm::vec3( 0.0f, 0.0f, 1.0f));
-        position = glm::vec3(-(oy+1), 0.0f, -ox);
-        modelMatrix = glm::translate( modelMatrix, position);
+        modelMatrix = glm::rotate(modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
+        position = glm::vec3(ox, -(oy+1)*1.0f, depth+1.0);
+        modelMatrix = glm::translate( modelMatrix, position );
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
     }
-    if(r2.murEst)
-    {
-        //mur ouest
-        modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        modelMatrix = glm::rotate( modelMatrix, -(PI), glm::vec3( 0.0f, 0.0f, 1.0f));
-        position = glm::vec3((oy)*1.0f, 0.0f, (ox+1)*1.0f);
-        modelMatrix = glm::translate( modelMatrix, position);
-        scene.push_back(
-            new wall( mm.getModels()["wall"], modelMatrix) );
-    }
-
-    
     if(r.murNord)
     {
         //mur sud
         modelMatrix = glm::mat4();
         modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
-        position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
+        position = glm::vec3(-(ox+1)*1.0f, -depth, (-oy));
         modelMatrix = glm::translate(modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
@@ -318,18 +163,19 @@ void makeWaterRoom(vector<actor*>& scene, room& r, room& r2)
     {
         
         modelMatrix = glm::mat4();
-        position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
+        position = glm::vec3(ox, -depth, (oy+1)*1.0f);
         modelMatrix = glm::translate(modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
     }
+
     if(r.murOuest)
     {
         //mur 
         modelMatrix = glm::mat4();
         modelMatrix = glm::rotate( modelMatrix, (-PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
         modelMatrix = glm::rotate( modelMatrix, (PI), glm::vec3( 0.0f, 0.0f, 1.0f));
-        position = glm::vec3(-(oy+1), -1.0f, -ox);
+        position = glm::vec3(-(oy+1), depth-1.0, -ox);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
@@ -340,93 +186,7 @@ void makeWaterRoom(vector<actor*>& scene, room& r, room& r2)
         modelMatrix = glm::mat4();
         modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
         modelMatrix = glm::rotate( modelMatrix, (-PI), glm::vec3( 0.0f, 0.0f, 1.0f));
-        position = glm::vec3((oy)*1.0f, -1.0f, (ox+1)*1.0f);
-        modelMatrix = glm::translate( modelMatrix, position);
-        scene.push_back(
-            new wall( mm.getModels()["wall"], modelMatrix) );
-    }
-
-
-}
-
-
-
-void makeRoom(vector<actor*>& scene, room& r)
-{
-    // if (wallNorth) ...
-    // coord : 1.0 = 1m
-    //scal = tileSize
-
-    modelManager& mm = modelManager::getInstance();
-
-    int ox = r.offsetX;
-    int oy = r.offsetY;
-
-    //sol
-    glm::mat4 modelMatrix = glm::mat4();
-    modelMatrix = glm::rotate(modelMatrix, (PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    glm::vec3 position = glm::vec3(ox, oy, 0.0f);
-    modelMatrix = glm::translate(modelMatrix, position);    
-
-    scene.push_back(
-        new wall( mm.getModels()["wall"], modelMatrix ) );
-    
-    //plafond
-    modelMatrix = glm::mat4();
-    modelMatrix = glm::rotate(modelMatrix, -(PI/2.0f), glm::vec3(1.0f,0.0f,0.0f));
-    position = glm::vec3(ox, -(oy+1)*1.0f, 1.0f);
-    modelMatrix = glm::translate( modelMatrix, position );
-    scene.push_back(
-        new wall( mm.getModels()["wall"], modelMatrix) );
-
-    if(r.murNord)
-    {
-        //mur sud
-        modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate(modelMatrix, PI, glm::vec3(0.0f,1.0f,0.0f));
-        position = glm::vec3(-(ox+1)*1.0f, 0.0f, (-oy));
-        modelMatrix = glm::translate(modelMatrix, position);
-        scene.push_back(
-            new wall( mm.getModels()["wall"], modelMatrix) );
-    }
-    //mur nord
-    if(r.murSud)
-    {
-        
-        modelMatrix = glm::mat4();
-        position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
-        modelMatrix = glm::translate(modelMatrix, position);
-        scene.push_back(
-            new wall( mm.getModels()["wall"], modelMatrix) );
-    }
-
-        if(r.murSud)
-    {
-        
-        modelMatrix = glm::mat4();
-        position = glm::vec3(ox, 0.0f, (oy+1)*1.0f);
-        modelMatrix = glm::translate(modelMatrix, position);
-        scene.push_back(
-            new wall( mm.getModels()["wall"], modelMatrix) );
-    }
-    if(r.murOuest)
-    {
-        //mur 
-        modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate( modelMatrix, (-PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        modelMatrix = glm::rotate( modelMatrix, (PI), glm::vec3( 0.0f, 0.0f, 1.0f));
-        position = glm::vec3(-(oy+1), -1.0f, -ox);
-        modelMatrix = glm::translate( modelMatrix, position);
-        scene.push_back(
-            new wall( mm.getModels()["wall"], modelMatrix) );
-    }
-    if(r.murEst)
-    {
-        //mur ouest
-        modelMatrix = glm::mat4();
-        modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));
-        modelMatrix = glm::rotate( modelMatrix, (-PI), glm::vec3( 0.0f, 0.0f, 1.0f));
-        position = glm::vec3((oy)*1.0f, -1.0f, (ox+1)*1.0f);
+        position = glm::vec3((oy)*1.0f, depth-1.0, (ox+1)*1.0f);
         modelMatrix = glm::translate( modelMatrix, position);
         scene.push_back(
             new wall( mm.getModels()["wall"], modelMatrix) );
@@ -436,18 +196,46 @@ void makeRoom(vector<actor*>& scene, room& r)
 
 }
 
-
-bool isColorEquals( glm::vec3 c1, glm::vec3 c2)
+room& analyzeNeighbors( int idx, utils::ImageRGB& img, glm::vec3 color)
 {
-    if ( c1.x == c2.x && c1.y == c2.y && c1.z == c2.z)
-        return (true);
-    return (false);
+    //Normal room
+    room r;
+    r.murOuest = false;
+    r.murEst = false;
+    r.murNord = false;
+    r.murSud = false;
+    r.ceil = true;
+    int nidx = idx-(img.w);
+    if ( nidx < 0 || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                   color))
+    {
+        r.murNord = true;
+    }
+    nidx = idx+(img.w);
+    if ( nidx >= img.data.size() || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                   color)) 
+    {
+        r.murSud = true;
+    }
+    nidx = idx-1;
+    if ( nidx < 0 || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                    color)) 
+    {
+        r.murOuest = true;
+    }
+    nidx = idx+1;
+    if ( nidx >= img.data.size() || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
+                                                   color)) 
+    {
+        r.murEst = true;
+    }
+    return r;
 }
 
 void loadMaze( const string &filename, vector<actor*>& scene, player* p)
 {
-    ImageRGB img;
-    load_ppm(img, filename);
+    utils::ImageRGB img;
+    utils::load_ppm(img, filename);
     for( int i = 0;
          i < img.h;
          ++i)
@@ -457,51 +245,20 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
               ++j )
         {
             int idx = (img.w *i)+j;
-            if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+            if ( utils::isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                 glm::vec3(255,255,255)))
             {
-                room r;
+                //Normal room
+                room r = analyzeNeighbors( idx, img, glm::vec3(0,0,0));
                 r.offsetX = j;
                 r.offsetY = i;
-                r.murOuest = false;
-                r.murEst = false;
-                r.murNord = false;
-                r.murSud = false;
-//check north connexion
-                int nidx = idx-(img.w);
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0)))
-                {
-                    r.murNord = true;
-                    //cout << "mur nord" << endl;
-                }
-                nidx = idx+(img.w);
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murSud = true;
-                    //cout << "mur sud" << endl;
-                }
-                nidx = idx-1;
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0))) 
-                {
-                    r.murOuest = true;
-                    // cout << "mur ouest" << endl;
-                }
-                nidx = idx+1;
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murEst = true;
-                    //    cout << "mur est" << endl;
-                }
-                makeRoom(scene,r);
+                makeRoom(scene,r, 0.0f, false);
             }
 
-            if( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+            if( utils::isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                glm::vec3(255,0,0)))
             {
+                //Begining room
                 p->setPosition( glm::vec3( j+(0.5), 0.5, i+(0.5) ) );
                 //cout << "changePosition" << endl;
                 if ( idx % img.w == 0)
@@ -523,189 +280,61 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
                     //cout << "bord haut" << endl;
                     p->getCamera()->addYaw(-180.0);
                 }
-                //TODO(marc) : FIX ME !!! + add makeRoom to entry and exit tiles
                 //recul le player de moitier
                 p->setPosition( p->getPosition() );
 
-                room r;
+                room r = analyzeNeighbors(idx, img, glm::vec3(0,0,0));
                 r.offsetX = j;
                 r.offsetY = i;
-                r.murOuest = false;
-                r.murEst = false;
-                r.murNord = false;
-                r.murSud = false;
-//check north connexion
-                int nidx = idx-(img.w);
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0)))
-                {
-                    r.murNord = true;
-                    //cout << "mur nord" << endl;
-                }
-                nidx = idx+(img.w);
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murSud = true;
-                    //cout << "mur sud" << endl;
-                }
-                nidx = idx-1;
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0))) 
-                {
-                    r.murOuest = true;
-                    // cout << "mur ouest" << endl;
-                }
-                nidx = idx+1;
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murEst = true;
-                    //    cout << "mur est" << endl;
-                }
-                makeRoom(scene,r);
+                makeRoom(scene,r, 0.0f, false);
             }
 
 
 
-            if ( isColorEquals( glm::vec3( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+            if ( utils::isColorEquals( glm::vec3( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                 glm::vec3(0,0,255)))
             {
-                room r;
+                //WAter room
+                room r = analyzeNeighbors( idx, img, glm::vec3(0,0,0));
                 r.offsetX = j;
                 r.offsetY = i;
-                r.murOuest = false;
-                r.murEst = false;
-                r.murNord = false;
-                r.murSud = false;
-//check north connexion
-                int nidx = idx-(img.w);
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0)))
-                {
-                    r.murNord = true;
-                    //cout << "mur nord" << endl;
-                }
-                nidx = idx+(img.w);
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murSud = true;
-                    //cout << "mur sud" << endl;
-                }
-                nidx = idx-1;
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0))) 
-                {
-                    r.murOuest = true;
-                    // cout << "mur ouest" << endl;
-                }
-                nidx = idx+1;
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murEst = true;
-                    //    cout << "mur est" << endl;
-                }
-
-                room r2;
+                
+                room r2 = analyzeNeighbors( idx, img, glm::vec3(0,0,255));
                 r2.offsetX = j;
                 r2.offsetY = i;
-                r2.murOuest = false;
-                r2.murEst = false;
-                r2.murNord = false;
-                r2.murSud = false;
-//check north connexion
-                nidx = idx-(img.w);
-                if ( nidx < 0 || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,255)))
-                {
-                    r2.murNord = true;
-                    //cout << "mur nord" << endl;
-                }
-                nidx = idx+(img.w);
-                if ( nidx >= img.data.size() || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,255))) 
-                {
-                    r2.murSud = true;
-                    //cout << "mur sud" << endl;
-                }
-                nidx = idx-1;
-                if ( nidx < 0 || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,255))) 
-                {
-                    r2.murOuest = true;
-                    // cout << "mur ouest" << endl;
-                }
-                nidx = idx+1;
-                if ( nidx >= img.data.size() || !isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,255))) 
-                {
-                    r2.murEst = true;
-                    //    cout << "mur est" << endl;
-                }
+                r2.ceil = false;
+                r2.murOuest = !r2.murOuest;
+                r2.murEst = !r2.murEst;
+                r2.murSud = !r2.murSud;
+                r2.murNord = !r2.murNord;
 
                 //NOTE(marc) : r2 is for under water
-                makeWaterRoom( scene, r, r2 );
-
-                
+                makeRoom( scene, r, 0.0f, true);
+                makeRoom( scene, r2, 1.0f, false);             
             }
 
 
-            if ( isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+            if ( utils::isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
                                 glm::vec3(255,126,0)))
             {
                 //door
                 //NOTE(marc): we should check if door is valid or on image border
                 //to be more accurate.
-                room r;
+                room r = analyzeNeighbors(idx, img, glm::vec3(0,0,0));
                 r.offsetX = j;
                 r.offsetY = i;
-                r.murOuest = false;
-                r.murEst = false;
-                r.murNord = false;
-                r.murSud = false;
-//check north connexion
-                int nidx = idx-(img.w);
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0)))
-                {
-                    r.murNord = true;
-                    //cout << "mur nord" << endl;
-                }
-                nidx = idx+(img.w);
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murSud = true;
-                    //cout << "mur sud" << endl;
-                }
-                nidx = idx-1;
-                if ( nidx < 0 || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                glm::vec3(0,0,0))) 
-                {
-                    r.murOuest = true;
-                    // cout << "mur ouest" << endl;
-                }
-                nidx = idx+1;
-                if ( nidx >= img.data.size() || isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                               glm::vec3(0,0,0))) 
-                {
-                    r.murEst = true;
-                    //    cout << "mur est" << endl;
-                }
-                makeRoom(scene,r);
-                nidx = idx-1;
+                makeRoom(scene,r, 0.0f, false);
+                int nidx = idx-1;
                 int nidx2 = idx+1;
-                if(  isColorEquals( glm::vec3 ( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b),
+                if(  utils::isColorEquals( glm::vec3 ( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b),
                                     glm::vec3(0,0,0))
-                     &&  isColorEquals( glm::vec3 ( img.data[nidx2].r, img.data[nidx2].g, img.data[nidx2].b),
+                     &&  utils::isColorEquals( glm::vec3 ( img.data[nidx2].r, img.data[nidx2].g, img.data[nidx2].b),
                                         glm::vec3(0,0,0)))
                 {
 //door along x axis
                     cout << "door x axis" << endl;
                     modelManager& mm = modelManager::getInstance();
-                    glm::vec3 position = glm::vec3(j, -0.1f, (i+0.5f)*1.0f);
+                    glm::vec3 position = glm::vec3(j, 0.0f, (i+0.5f)*1.0f);
                     glm::mat4 modelMatrix = glm::mat4();
                     modelMatrix = glm::translate(modelMatrix, position);
                     
@@ -719,7 +348,7 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
                     modelManager& mm = modelManager::getInstance();
                     glm::mat4 modelMatrix = glm::mat4();
                     modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));         
-                    glm::vec3 position = glm::vec3(-(i+1)*1.0f, -0.1f, (j+0.5)*1.0f);
+                    glm::vec3 position = glm::vec3(-(i+1)*1.0f, 0.0f, (j+0.5)*1.0f);
                     modelMatrix = glm::translate( modelMatrix, position);
                     scene.push_back(
                         new door( mm.getModels()["door"], modelMatrix) );
@@ -732,41 +361,40 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
 
 void drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader)
 {
+    //Render everything excpet water
+    mainShader->use();
     for ( vector<actor*>::iterator it = scene.begin();
     it != scene.end();
     ++it)
     {
         //TODO(marc) : make instancied rendering for walls ?
-        if((*it)->getType() == "water")
-        {
-            
-        }
-        else
+        if((*it)->getType() != "water")
         {
             glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgram(), "model"),
                                1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
             (*it)->getModel()->Draw(*mainShader);
         }
     }
-    for ( vector<actor*>::iterator it = scene.begin();
-    it != scene.end();
-    ++it)
+    //NOTE(marc): Besoin de render l'eau en dernier pour les problèmes de blending qui ne sont pas
+    //order independent, pas le temps de faire un blending non order independent
+    //Render only water
+    if(waterShader)
     {
-        //TODO(marc) : make instancied rendering for walls ?
-        if((*it)->getType() == "water")
+        waterShader->use();
+        for ( vector<actor*>::iterator it = scene.begin();
+              it != scene.end();
+              ++it)
         {
-            if(waterShader)
+            //TODO(marc) : make instancied rendering for walls ?
+            if((*it)->getType() == "water")
             {
-                waterShader->use();
                 glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "model"),
                                    1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
-                (*it)->getModel()->Draw(*waterShader);
-                mainShader->use();
+                (*it)->getModel()->Draw(*waterShader);       
             }
-        }
         
+        }
     }
-
     
 }
 
@@ -799,20 +427,29 @@ void checkCollision(vector<actor*>& scene, player* p, float deltaTime)
          it != scene.end();
          ++it)
     {
-        if ( AABBtoAABB( (*it)->getAABB(), p->getAABB()))
+        if ( (*it)->getType() == "water" )
         {
-            (*it)->doCollision(p, deltaTime);
+            AABB aabb = (*it)->getAABB();
+            aabb.max.y += 1.0;
+            aabb.min.y += -1.0;
+            if ( AABBtoAABB( aabb, p->getAABB()))
+            {
+                (*it)->doCollision(p, deltaTime);
+            }
+        }
+        else
+        {
+            if ( AABBtoAABB( (*it)->getAABB(), p->getAABB()))
+            {
+                (*it)->doCollision(p, deltaTime);
+            }
         }
     }
 }
 
-int game::mainLoop()
+
+void game::loadAssets()
 {
-    vector<actor*> scene;
-    player* p = new player();
-    p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
-    p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
-#if 1
     modelManager& manager = modelManager::getInstance();
     manager.getModels().insert(
         std::pair<std::string, Model*>
@@ -829,17 +466,118 @@ int game::mainLoop()
     manager.getModels().insert(
         std::pair<std::string, Model*>
         ("water", new Model( "../Assets/Models/Water/water.obj" )));
-    loadMaze( "../Assets/mazeTest.ppm", scene, p);
+    manager.getModels().insert(
+        std::pair<std::string, Model*>
+        ("monster2", new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" )));
+}
 
-    glm::mat4 modelMatrix = glm::mat4();
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z - 2.0f));
-    modelMatrix = glm::scale( modelMatrix, glm::vec3(0.1,0.1,0.1));    
-    
-    chest* aChest = new chest( manager.getModels()["chest"], modelMatrix, chest::Type::GOLD, 100 );
-    monster* m = new monster( manager.getModels()["monster"], modelMatrix,
-                              glm::vec3(p->getPosition().x, -0.1f, p->getPosition().z - 2.0f), 2.0);
-    scene.push_back(m);
-    
+void loadWorld( const std::string path, vector<actor*>& scene, player* p)
+{
+    modelManager& manager = modelManager::getInstance();
+    ifstream file(path);
+    string line;
+    int lineNb = 0;
+    int chestNb = 0;
+    int monsterNb = 0;
+    if(file.is_open())
+    {
+        getline (file,line);
+        getline (file, line);
+        loadMaze( line, scene, p );
+        getline(file, line);
+        chestNb = std::stoi(line, nullptr);
+        for ( int i = 0;
+              i < chestNb;
+              ++i)
+        {
+            getline(file, line);
+            stringstream ss(line);
+            string item;
+            vector<string> elements;
+            while (getline(ss, item, ':'))
+            {
+                elements.push_back(item);
+            }
+            glm::mat4 modelMatrix = glm::mat4();
+            
+            modelMatrix = glm::translate( modelMatrix,
+                                                    glm::vec3( stof(elements[1], nullptr)+0.5,
+                                                               0.0,
+                                                               stof(elements[2], nullptr)+0.5));
+            modelMatrix = glm::scale( modelMatrix, glm::vec3(0.1,0.1,0.1));
+            chest* aChest;
+            if (elements[4] == "gold")
+                aChest = new chest( manager.getModels()[elements[6]], modelMatrix, chest::Type::GOLD, stoi(elements[5], nullptr) );
+            else if ( elements[4] == "life")
+                aChest = new chest( manager.getModels()[elements[6]], modelMatrix, chest::Type::LIFE, stoi(elements[5], nullptr) );
+            else
+                aChest = new chest( manager.getModels()[elements[6]], modelMatrix, chest::Type::KEY, stoi(elements[5], nullptr) );
+            scene.push_back(aChest);
+        }
+        getline(file, line);
+        monsterNb = stoi(line, nullptr);
+        for ( int i = 0;
+              i < monsterNb;
+              ++i)
+        {
+            getline(file, line);
+            stringstream ss(line);
+            string item;
+            vector<string> elements;
+            while (getline(ss, item, ':'))
+            {
+                elements.push_back(item);
+            }
+            cout << elements[8] << endl;
+            glm::mat4 modelMatrix = glm::mat4();
+            modelMatrix = glm::translate( modelMatrix,
+                                                    glm::vec3( stof(elements[1], nullptr)+0.5,
+                                                               0.0,
+                                                               stof(elements[2], nullptr)+0.5));
+            modelMatrix = glm::scale( modelMatrix, glm::vec3(0.1,0.1,0.1));
+            monster* m;
+                m = new monster( manager.getModels()[elements[8]], modelMatrix,
+                              glm::vec3( stof(elements[1], nullptr)+0.5, 0.0f, stof(elements[2], nullptr)+0.5),
+                                 stoi(elements[5], nullptr), stof(elements[6], nullptr), stoi(elements[7], nullptr),2.0);
+            scene.push_back(m);
+        }
+        file.close();
+    }
+    else
+    {
+        cout << "file problem" << endl;
+    }
+}
+
+
+void checkMonsterAggro( vector<actor*>& scene, player* p, float deltaTime )
+{
+    for ( vector<actor*>::iterator it = scene.begin();
+          it != scene.end();
+          ++it)
+    {
+        if( (*it)->getType() == "monster" )
+        {
+            monster* m = static_cast<monster*>( (*it) );
+            if ( m->isAlive() )
+            {
+                m->checkAggro(p, deltaTime);
+            }
+        }
+    }
+}
+
+int game::mainLoop()
+{
+    vector<actor*> scene;
+    player* p = new player();
+    p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
+    p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
+cout << "helo" << endl;
+    loadAssets();
+    cout << "helo" << endl;
+    loadWorld( "../Assets/toLoad.txt", scene, p);
+    //Load shaders
     shader* lightningShader = new shader("../Shaders/simpleLight" );
     lightningShader->init();
     shader* textShader = new shader("../Shaders/simple" );
@@ -852,28 +590,31 @@ int game::mainLoop()
     waterShader->init();
     shader* blurShader = new shader( "../Shaders/blur" );
     blurShader->init();
-    text* test = new text( "DEFAULT", glm::vec2(0.0,0.0));
+    
+
+
+    text* life = new text( "DEFAULT", glm::vec2(0.0,0.0), 50, false);
     //NOTE(marc) : rajouter un sens au texte pour pouvoir mettre la position
-    //dans les coin a droite par exemple
+    //dans les coins a droite par exemple
     //Rajouter aussi une taille au texte (changement au moment du loadfont)
     //peut etre pouvoir donner une font aussi, peut etre pas util pourn le moment
-    text* framerate_t = new text( "DEFAULT", glm::vec2(700.0, 0.0));
+    text* framerate_t = new text( "DEFAULT", glm::vec2(700.0, 0.0), 10, true);
+    text* gold = new text( "DEFAULT", glm::vec2(0.0, 50.0), 50, false);
+    text* keys = new text( "DEFAULT", glm::vec2(0.0, 100.0), 50, false);
     
     float last = 0.0f;
     float deltaTime = 0.0f;
     float current = 0.0f;
-#endif
 
+
+    const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
     GLuint quadVAO = 0;
     GLuint quadVBO, quadEBO;
 
-    GLuint depthMapFBO;
+    //Create depthmap FBO
+    GLuint depthMapFBO, depthMapTex;
     glGenFramebuffers( 1 , &depthMapFBO );
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-
-    const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-
-    GLuint depthMapTex;
     glGenTextures(1, &depthMapTex);
     glBindTexture(GL_TEXTURE_2D, depthMapTex);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -885,19 +626,17 @@ int game::mainLoop()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &zeros.x);
     glBindTexture(GL_TEXTURE_2D, 0);
-
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTex, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
-
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         cout << "FBO pb" << endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    //Create reflection FBO
     GLuint reflectionFBO, reflectionRBO, reflectionTex;
     glGenFramebuffers(1, &reflectionFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, reflectionFBO);
-    
     glGenTextures(1, &reflectionTex);
     glBindTexture(GL_TEXTURE_2D, reflectionTex);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -908,18 +647,17 @@ int game::mainLoop()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &zeros.x);
     glBindTexture(GL_TEXTURE_2D, 0);
-
     glGenRenderbuffers(1, &reflectionRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, reflectionRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SHADOW_WIDTH, SHADOW_HEIGHT);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
     glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, reflectionRBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, reflectionTex, 0);
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         cout << "FBO pb" << endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    //Create blur FBOs
     GLuint pingpongFBO[2];
     GLuint pingpongBuffer[2];
     glGenFramebuffers(2, pingpongFBO);
@@ -942,7 +680,7 @@ int game::mainLoop()
             cout << "FBO pb" << endl;
     }
 
-    
+
     int framerate = 0;
 
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
@@ -959,22 +697,25 @@ int game::mainLoop()
         framerate_t->setText(std::to_string(framerate));
         p->getController()->processEvents();
         p->move(deltaTime);
+        life->setText(std::to_string(p->getLife()));
+        gold->setText(std::to_string(p->getGold()));
+        keys->setText(std::to_string(p->getKey()));
 
-        //if ( m->isAlive() )
-        // {
-        //     m->checkAggro(p, deltaTime);
-        // }
-
-        //checkCollision( scene, p, deltaTime);
-        test->setText(std::to_string(p->getLife()));
-        
+        checkMonsterAggro( scene, p, deltaTime );
+        checkCollision( scene, p, deltaTime);       
 
         glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(),
                                                 (float)screenWidth/(float)screenHeight,
                                                 0.1f, 100.0f);
         glm::mat4 view = p->getCamera()->getViewMatrix();
+        glm::mat4 te = glm::mat4(
+            glm::vec4( 0.0, 0.0, 0.0, 0.0),
+            glm::vec4( 0.0, 0.0, 0.0, -2.0),
+            glm::vec4( 0.0, 0.0, 0.0, 0.0),
+            glm::vec4( 0.0, 0.0, 0.0, 0.0)
+                                 );
         glm::mat4 rotView = p->getCamera()->getRotatedViewMatrix();
-        glm::mat4 eyeSpace = projection * view;
+        glm::mat4 eyeSpace = projection * (view + te);
         
         depthShader->use();
         glUniformMatrix4fv(glGetUniformLocation(depthShader->getProgram(), "lightSpaceMatrix"),
@@ -994,17 +735,7 @@ int game::mainLoop()
   
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         if(isGLError())
-            cout << glGetError() << endl;
-
-        /*
-          glViewport(0, 0, screenWidth, screenHeight);
-          glBindFramebuffer(GL_FRAMEBUFFER, 0);
-          glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-          //glDisable(GL_CULL_FACE);
-          drawScene(scene, depthShader, 0);
-          if(isGLError())
-          cout << "ERROR" << endl;
-        */        
+            cout << glGetError() << endl;       
 #if 1
 
         //SET WATER SHADER UNIFROMS
@@ -1035,9 +766,9 @@ int game::mainLoop()
         glUniform1f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].constant"),
                     1.0f);
         glUniform1f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].linear"),
-                    0.0005);   //0.7);
+                    0.7); //0.0005);   //0.7);
         glUniform1f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].quadratic"),
-                    0.00005);  // 1.8)
+                    1.8); //0.00005);  // 1.8)
 
         //SET LIGHTNING SHADER UNIFORMS
         lightningShader->use();
@@ -1065,9 +796,9 @@ int game::mainLoop()
         glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].constant"),
                     1.0f);
         glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].linear"),
-                    0.0005);   //0.7);
+                    0.22); //0.0005);   //0.7);
         glUniform1f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].quadratic"),
-                    0.00005);  // 1.8);  
+                    0.20); //0.00005);  // 1.8);  
 
         GLint maxTex;
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTex);
@@ -1076,20 +807,19 @@ int game::mainLoop()
         glUniform1i(glGetUniformLocation(waterShader->getProgram(), "shadowMap"), maxTex);
         glBindTexture(GL_TEXTURE_2D, depthMapTex);          
 
-        glm::mat4 invert = glm::mat4(
-            glm::vec4(1.0,0.0,0.0,0.0),
-            glm::vec4(0.0,-1.0,0.0,0.0),
-            glm::vec4(0.0,0.0,1.0,0.0),
-            glm::vec4(0.0,0.0,0.0,1.0)
-                                     );
-        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
-                           1, GL_FALSE, glm::value_ptr(invert));
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(rotView));
         glm::vec4 plane = glm::vec4( 0.0 , 1.0 , 0.0, 0.0 );
         glUniform4f(glGetUniformLocation(lightningShader->getProgram(), "clipPlane"),
                     plane.x, plane.y, plane.z, plane.w);   
 
+        glm::mat4 invert = glm::mat4 (
+            glm::vec4( 1.0, 0.0, 0.0, 0.0),
+            glm::vec4( 0.0, -1.0, 0.0, 0.0),
+            glm::vec4( 0.0, 0.0, 1.0, 0.0),
+            glm::vec4( 0.0, 0.0, 0.0, 1.0));
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
+                           1, GL_FALSE, glm::value_ptr(invert));
         //RENDER WATER REFLECTION
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, reflectionFBO);
@@ -1098,6 +828,9 @@ int game::mainLoop()
         glEnable(GL_CLIP_DISTANCE0);
         drawScene(scene, lightningShader, 0);
         glCullFace(GL_BACK);
+        invert = glm::mat4(1.0);
+        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
+                           1, GL_FALSE, glm::value_ptr(invert));
 
 #if 1
         //BLUR
@@ -1158,9 +891,6 @@ int game::mainLoop()
 
 #if 1
         lightningShader->use();
-        invert = glm::mat4(1.0);
-        glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
-                           1, GL_FALSE, glm::value_ptr(invert));
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(view));
         plane = glm::vec4( 0.0 , 1.0 , 0.0, 200.0 );
@@ -1188,8 +918,10 @@ int game::mainLoop()
         projection = glm::ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f);
         glUniformMatrix4fv(glGetUniformLocation(textShader->getProgram(), "projection"),
                            1, GL_FALSE, glm::value_ptr(projection));
-        test->draw(*textShader);
+        life->draw(*textShader);
         framerate_t->draw(*textShader);
+        gold->draw(*textShader);
+        keys->draw(*textShader);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 #endif

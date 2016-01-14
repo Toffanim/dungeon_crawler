@@ -45,12 +45,15 @@ public:
     void updateCamera();
     void mouseMotion(int x, int y);
 
+    bool hasKey();
     bool isAttacking( float deltaTime );
 
     void addLife( int value ) { life += value; }
     void addGold( int value ) { gold += value; }
+    void addKey( int value ) { key += value; }
     int getGold() { return(gold);}
     int getLife() { return(life);}
+    int getKey() {return(key);}
     
     std::map<SDL_Keycode, std::string> getMapping(){return(mapping);}
     controller* getController(){return(c);}
@@ -81,13 +84,13 @@ private:
 
     int life;
     int gold;
+    int key;
     
     std::map<SDL_Keycode, std::string> mapping;
     float speed;
     glm::vec3 position;
     controller* c;
     camera* cam;
-//    Model* model;
 
     float lastX;
     float lastY;

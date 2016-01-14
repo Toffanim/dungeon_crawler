@@ -38,6 +38,7 @@ public :
     int init();
     void close();
     int mainLoop();
+    void loadAssets();
 private :
     SDL_Window* window;
     SDL_GLContext openGLcontext;

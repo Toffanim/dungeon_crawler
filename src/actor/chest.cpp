@@ -21,6 +21,8 @@ void chest::doCollision(player* p, float deltaTime)
             p->addGold( gift );
         if ( giftType == Type::LIFE )
             p->addLife( gift );
+        if ( giftType == Type::KEY )
+            p->addKey(gift);
         isOpen = true;
     }
 

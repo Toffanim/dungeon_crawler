@@ -13,10 +13,9 @@ player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode righ
         speed(2.0f), position( glm::vec3( 0.0f, 0.0f, 0.0f )),
         lastX(0.0f), lastY(0.0f), firstTime(true), life(100), gold(0),
         mapping(std::map<SDL_Keycode, std::string>()), atkPerSec( 0.5f ),
-atk( 2 ), lastAttack( 0.0f )
+atk( 2 ), lastAttack( 0.0f ), key(1)
 {
-//    model = new Model( "Alien_Necromorph/Alien_Necromorph.
-#if 1           
+          
     mapping.insert( std::pair<SDL_Keycode,std::string>(forwardKey, "moveForward"));
     mapping.insert( std::pair<SDL_Keycode,std::string>(backwardKey, "moveBackward"));
     mapping.insert( std::pair<SDL_Keycode,std::string>(rightKey, "moveRight"));
@@ -43,7 +42,7 @@ atk( 2 ), lastAttack( 0.0f )
         aabb.max = glm::vec3();
         aabb.size = glm::vec3();
         aabb.center = glm::vec3();
-#endif
+
 }
 
 player::~player()
@@ -52,6 +51,11 @@ player::~player()
     { delete c; }
     if(cam)
     { delete cam; }
+}
+
+bool player::hasKey()
+{
+    return key > 0 ? true : false;
 }
 
 bool player::isAttacking( float deltaTime )

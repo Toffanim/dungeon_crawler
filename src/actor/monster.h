@@ -13,7 +13,8 @@
 class monster : public actor
 {
 public :
-    monster( Model* model, glm::mat4 modelMatrix, glm::vec3 position, float aggroRadius );
+    monster( Model* model, glm::mat4 modelMatrix, glm::vec3 position,
+             int atk, float atkPerSec, int life, float aggroRadius );
     void doCollision( player* p , float deltaTime);
     void checkAggro(player* p, float deltaTime);
     bool isAlive() { return(alive); }
@@ -21,6 +22,7 @@ private :
     int life;
     float speed;
     float lastAttack;
+    int atk;
     float atkPerSec;
     glm::vec3 position;
     bool alive;

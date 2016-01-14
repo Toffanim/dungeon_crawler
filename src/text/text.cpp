@@ -8,8 +8,8 @@
 #include "text.h"
 using namespace std;
 
-text::text( std::string msg, glm::vec2 position)
-        :msg(msg), position(position), width(0.0f), height(0.0f)
+text::text( std::string msg, glm::vec2 position, int size, bool reverse)
+        :msg(msg), position(position), width(0.0f), height(0.0f), size(size), reverse(reverse)
 {
     texture = textureFromText();
 }
@@ -27,6 +27,7 @@ void text::draw(shader shader)
 {
     int Width = width;
     int Height = height;
+
     GLfloat vertices[] = {
         // Positions                                     // Colors           // Texture Coords
         position.x + Width,  position.y, 0.0f,           1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // Top Right
@@ -34,7 +35,6 @@ void text::draw(shader shader)
         position.x, position.y + Height, 0.0f,           0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // Bottom Left
         position.x, position.y, 0.0f,                    1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // Top Left 
     };
-
 
     GLuint indices[] = {  // Note that we start from 0!
         0, 1, 3, // First Triangle
@@ -80,7 +80,7 @@ GLuint text::textureFromText()
     GLuint textureID;
     if( TTF_Init() == -1)
         cout << "probleme init ttf" << endl;
-    TTF_Font* f = TTF_OpenFont( "../Assets/Fonts/Roboto-Regular.ttf", 100);
+    TTF_Font* f = TTF_OpenFont( "../Assets/Fonts/Roboto-Regular.ttf", size);
     if (!f)
         cout << "probleme font" << endl;
     SDL_Surface* image = TTF_RenderText_Blended( f, msg.c_str(), {255,255,255,255});

@@ -7,9 +7,10 @@
    ======================================================================== */
 #include "monster.h"
 
-monster::monster(Model* model, glm::mat4 modelMatrix, glm::vec3 position, float aggroRadius)
-        :actor(model, modelMatrix, "monster"), aggroRadius(aggroRadius), alive(true), position(position)
-        ,speed(3.0f), lastAttack( 0.0f ), atkPerSec( 1.0f ), life( 4 )
+monster::monster(Model* model, glm::mat4 modelMatrix, glm::vec3 position, int atk, float atkPerSec, int life, float aggroRadius)
+        :actor(model, modelMatrix, "monster"), aggroRadius(aggroRadius), alive(true),
+         position(position)
+        ,speed(3.0f), lastAttack( 0.0f ), atkPerSec( atkPerSec ), atk(atk), life( life )
 {
 }
 
@@ -21,7 +22,7 @@ void monster::doCollision( player* p, float deltaTime )
         lastAttack += deltaTime;
         if ( lastAttack >= atkPerSec )
         {
-            p->addLife( -10 );
+            p->addLife( -atk );
             lastAttack = 0.0f;
         }
 //NOTE(marc) : ne devrais pas être là, si plusieurs monstre attaque le
@@ -51,8 +52,6 @@ void monster::checkAggro(player* p, float deltaTime)
         glm::mat4 m = glm::mat4();
         m = glm::translate( m, position );
         m = glm::scale( m, glm::vec3(0.1,0.1,0.1));
-        //glm::mat4 m = getModelMatrix();
-        //m = glm::translate( m, t);
         setPosition(m);
     }
 }

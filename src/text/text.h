@@ -18,12 +18,14 @@
 class text
 {
 public :
-    text( std::string msg, glm::vec2 position );
+    text( std::string msg, glm::vec2 position, int size, bool reverse );
     void draw(shader shader);
     void setText( std::string newText );
 private:
     std::string msg;
     glm::vec2 position;
+    int size;
+    bool reverse;
     float width;
     float height;
     GLuint texture;

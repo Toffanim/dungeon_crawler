@@ -19,7 +19,6 @@ out VS_OUT {
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 invert;
 uniform mat4 remapping;
 
 uniform vec3 lightPos;
@@ -28,7 +27,7 @@ uniform vec4 clipPlane;
 
 void main()
 {
-vec4 newPos = invert * projection * view * model * vec4(position, 1.0f);
+vec4 newPos = projection * view * model * vec4(position, 1.0f);
 gl_Position = newPos;
 vs_out.FragPos = vec3(model * vec4(position, 1.0f));
 vs_out.LightFragPosition = projection * view * model * vec4(position, 1.0f);

@@ -39,14 +39,12 @@ out vec4 color;
 uniform vec3 viewPos;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform Material material;
-uniform sampler2D shadowMap;
 uniform sampler2D reflection_texture;
 uniform bool useNormalMapping;
 
 // Function prototypes
-vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, 
+vec4 CalcPointLight(PointLight light, Material mat, vec3 normal, 
                     vec3 fragPos, vec4 lightFragPos, vec3 viewDir, vec3 lightDir);
-float ShadowCalculation(vec4 fragPosition);
 
 
 vec3 calculateAmbient(vec3 ambientLight, vec3 materialAmbient)
@@ -69,14 +67,15 @@ vec3 calculateSpecular(vec3 specularLight, vec3 materialSpecular, float material
 	return specularLight * materialSpecular * pow(max(0,dot(h, normal)),materialShininess) * normalizationFactor; 
 }
 
-vec3 calculateFresnel(vec3 materialSpecular, vec3 normal, vec3 directionFromEye)
+vec4 calculateFresnel(vec3 materialSpecular, vec3 normal, vec3 directionFromEye)
 {
-	return materialSpecular + (vec3(1.0) - materialSpecular) * pow (clamp(1.0 + dot(directionFromEye, normal), 0.0, 1.0), 5.0); // TODO #4: calculate fresnel term
+        float fresnel = clamp(1.0-dot(directionFromEye, normal), 0.0, 1.0);
+	return vec4(materialSpecular, fresnel); 
 }
 
 void main()
 {    
-    vec3 result;
+    vec4 result;
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);
     vec3 lightDir = normalize(pointLights[0].position - fs_in.FragPos);
     vec3 norm = normalize(fs_in.Normal);
@@ -93,31 +92,11 @@ void main()
          result += CalcPointLight(pointLights[i], material, norm, fs_in.FragPos, 
                               fs_in.LightFragPosition, viewDir, lightDir);
 
-    vec2 texcoords = fs_in.TexCoords2.xy / fs_in.TexCoords2.w *0.5 + 0.5;
-    texcoords = vec2( texcoords.x, texcoords.y -0.05);
-    color = vec4( vec3(texture( reflection_texture, texcoords)), 0.5);
-
-     //color = vec4(result, 1.0f);
+    color = result;
 }
 
-float ShadowCalculation(vec4 fragPosition)
-{
-     // perform perspective divide
-     vec3 projCoords = fragPosition.xyz /fragPosition.w;
-     // Transform to [0,1] range
-     projCoords = projCoords * 0.5 + 0.5;
-     // Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-     float closestDepth = texture(shadowMap, projCoords.xy).r; 
-     // Get depth of current fragment from light's perspective
-     float currentDepth = projCoords.z;
-     // Check whether current frag pos is in shadow
-     float shadow;
-     shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
-     return shadow;
-} 
-
 // Calculates the color when using a point light.
-vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, 
+vec4 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos, 
                     vec4 lightFragPos, vec3 viewDir, vec3 lightDir)
 {
      
@@ -125,28 +104,14 @@ vec3 CalcPointLight(PointLight light, Material mat, vec3 normal, vec3 fragPos,
      float distance = length(light.position - fragPos);
      float attenuation = 1.0f / (light.constant + 
                                   light.linear * distance 
-                                 + light.quadratic * (distance * distance));  
+                                 + light.quadratic * (distance * distance));   
 
-	float visibility = ShadowCalculation(lightFragPos);
-	float diffuseReflectance = max(0.0, dot(lightDir, normal));
-	float shadow = diffuseReflectance * visibility;  
-
-     vec3 lighting = attenuation
-                    *( 
-                             calculateAmbient( light.ambient, 
-                                         vec3(texture(mat.texture_diffuse1, 
-                                         fs_in.TexCoords)))
-					 + ( 1.0 )
-                              * ( 
-                                    calculateDiffuse( light.diffuse, 
-                                        vec3(texture(mat.texture_diffuse1, fs_in.TexCoords)), 
-                                        normal, lightDir)
-                                    + calculateSpecular( light.specular, 
-                                         vec3(texture(mat.texture_specular1, fs_in.TexCoords)), 
-                                         mat.shininess, normal, lightDir, viewDir)
-                               )
-                     );  
-
-     return (lighting);
+    vec2 texcoords = fs_in.TexCoords2.xy / fs_in.TexCoords2.w *0.5 + 0.5;
+    texcoords = vec2( texcoords.x, texcoords.y -0.05);
+    vec3 specularColor = vec3(texture( reflection_texture, texcoords)); 
+    vec4 lighting =  (
+        calculateFresnel(specularColor, normal, viewDir)
+    );
+    return (lighting);
 }
 
