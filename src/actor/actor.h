@@ -24,13 +24,14 @@ public :
     actor( glm::vec3 position );
     actor( Model* model,glm::mat4 modelMatrix, std::string type );
     actor( glm::vec3 position, std::string modelPath);
-    
+
     glm::mat4 getModelMatrix() { return(modelMatrix); }
     Model* getModel(){return(model);}
     void setPosition( glm::mat4 newModelMatrix ) { modelMatrix = newModelMatrix; computeAABB();}
     AABB& getAABB(){return(aabb);}
     std::string getType() {return type;}
     virtual void doCollision( player* p, float deltaTime ) = 0;
+    virtual void Draw(shader* s) = 0;
 private :
     glm::mat4 modelMatrix;
     Model* model;

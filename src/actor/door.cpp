@@ -13,6 +13,14 @@ door::door( Model* model, glm::mat4 modelMatrix)
 
 }
 
+void door::Draw(shader* s )
+{
+    if(!isOpen)
+    {
+        getModel()->Draw( *s );
+    }
+}
+
 void door::doCollision(player* p, float deltaTime)
 {
     if(!isOpen)

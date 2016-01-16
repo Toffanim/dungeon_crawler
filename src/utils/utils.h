@@ -19,6 +19,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <glm/glm.hpp>
+#include "../mesh/aabb.h"
 
 namespace utils
 {
@@ -38,5 +39,6 @@ namespace utils
     GLuint TextureFromFile( const char* path, std::string directory);
     float absmin( float a, float b);
     void load_ppm(ImageRGB &img, const std::string &name);
+    bool AABBtoAABB(const AABB& tBox1, const AABB& tBox2);
 };
 #endif

@@ -13,6 +13,11 @@ water::water( Model* model, glm::mat4 modelMatrix ) :
 
 }
 
+void water::Draw(shader* s)
+{
+    getModel()->Draw(*s);
+}
+
 void water::doCollision(player* p, float deltatTime)
 {
 

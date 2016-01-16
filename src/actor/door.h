@@ -14,6 +14,7 @@ class door : public actor
 public :
     door( Model* model, glm::mat4 modelMatrix);
     void doCollision(player* p, float deltaTime);
+    void Draw(shader* s);
 private :
     bool isOpen;
 };

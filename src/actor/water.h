@@ -15,6 +15,7 @@ class water : public actor
 public :
     water( Model* model, glm::mat4 modelMatrix);
     void doCollision( player* p, float deltaTime);
+    void Draw(shader* s);
 };
 
 #endif

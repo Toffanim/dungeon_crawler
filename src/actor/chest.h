@@ -16,6 +16,7 @@ public :
     enum Type { GOLD, LIFE, KEY };
     chest( Model* model, glm::mat4 modelMatrix, Type type, int gift);
     void doCollision(player* p, float deltaTime );
+    void Draw(shader* s);
 private :
     int gift;
     Type giftType;

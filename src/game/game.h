@@ -31,15 +31,34 @@
 #include "../actor/monster.h"
 #include "../actor/water.h"
 
-class game
+
+struct room
 {
-public :
+    bool murSud;
+    bool murEst;
+    bool murOuest;
+    bool murNord;
+    bool ceil;
+    bool floor;
+    int offsetX;
+    int offsetY;
+};
+
+class game
+{    
+public :    
     game(int width, int height);
     int init();
     void close();
     int mainLoop();
     void loadAssets();
+    glm::vec2 loadMaze( const string &filename, vector<actor*>& scene, player* p);
+    void drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader);
+    void checkCollision(vector<actor*>& scene, player* p, float deltaTime);
+    glm::vec2 loadWorld( const std::string path, vector<actor*>& scene, player* p);
+    void checkMonsterAggro( vector<actor*>& scene, player* p, float deltaTime );
 private :
+   
     SDL_Window* window;
     SDL_GLContext openGLcontext;
     SDL_Event events;
@@ -48,6 +67,8 @@ private :
     int screenHeight;
 
     void startupGLDiagnostics();
+    void makeRoom(vector<actor*>& scene, room& r, float depth, bool waterRoom);
+    room& analyzeNeighbors( int idx, utils::ImageRGB& img, glm::vec3 color);
 };
 
 #endif

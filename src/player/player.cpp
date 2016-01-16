@@ -11,7 +11,7 @@ player::player(SDL_Keycode forwardKey, SDL_Keycode backwardKey, SDL_Keycode righ
         forwardKey(forwardKey), backwardKey(backwardKey), rightKey(rightKey), leftKey(leftKey),
         moveForward(false), moveRight(false), moveLeft(false), moveBackward(false),
         speed(2.0f), position( glm::vec3( 0.0f, 0.0f, 0.0f )),
-        lastX(0.0f), lastY(0.0f), firstTime(true), life(100), gold(0),
+        lastX(0.0f), lastY(0.0f), firstTime(true), life(10), gold(0),
         mapping(std::map<SDL_Keycode, std::string>()), atkPerSec( 0.5f ),
 atk( 2 ), lastAttack( 0.0f ), key(1)
 {

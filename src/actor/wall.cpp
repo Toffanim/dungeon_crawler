@@ -12,6 +12,11 @@ wall::wall( Model* model, glm::mat4 modelMatrix)
 {
 }
 
+void wall::Draw(shader* s)
+{
+    getModel()->Draw(*s);
+}
+
 void wall::doCollision(player* p, float deltaTime)
 {
     glm::vec3 t = glm::normalize(p->getCamera()->getFront());

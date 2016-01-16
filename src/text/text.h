@@ -21,6 +21,7 @@ public :
     text( std::string msg, glm::vec2 position, int size, bool reverse );
     void draw(shader shader);
     void setText( std::string newText );
+    std::string getText(){return(msg);}
 private:
     std::string msg;
     glm::vec2 position;

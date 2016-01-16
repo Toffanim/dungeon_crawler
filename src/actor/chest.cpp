@@ -13,6 +13,14 @@ chest::chest(Model* model, glm::mat4 modelMatrix, Type type, int gift )
 
 }
 
+void chest::Draw(shader* s)
+{
+    if( !isOpen)
+    {
+        getModel()->Draw(*s);
+    }
+}
+
 void chest::doCollision(player* p, float deltaTime)
 {
     if (!isOpen)

@@ -123,6 +123,21 @@ namespace utils {
         return content;
     }
 
+    bool AABBtoAABB(const AABB& tBox1, const AABB& tBox2)
+    {
+
+//Check if Box1's max is greater than Box2's min and Box1's min is less than Box2's max
+        return(tBox1.max.x > tBox2.min.x &&
+               tBox1.min.x < tBox2.max.x &&
+               tBox1.max.y > tBox2.min.y &&
+               tBox1.min.y < tBox2.max.y &&
+               tBox1.max.z > tBox2.min.z &&
+               tBox1.min.z < tBox2.max.z);
+
+//If not, it will return false
+
+    }
+    
     bool isColorEquals( glm::vec3 c1, glm::vec3 c2)
     {
         if ( c1.x == c2.x && c1.y == c2.y && c1.z == c2.z)

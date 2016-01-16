@@ -16,6 +16,7 @@ class wall : public actor
 public :
     wall( Model* model, glm::mat4 modelMatrix );
     void doCollision(player* p, float deltaTime);
+    void Draw(shader* s);
 private:
     bool isInRange;
 };

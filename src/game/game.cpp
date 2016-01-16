@@ -95,26 +95,10 @@ void game::close()
     endgame = true;
 }
 
-struct SceneNode
-{
-    Model* model;
-    glm::mat4 modelMatrix;    
-};
-
-struct room
-{
-    bool murSud;
-    bool murEst;
-    bool murOuest;
-    bool murNord;
-    bool ceil;
-    bool floor;
-    int offsetX;
-    int offsetY;
-};
 
 
-void makeRoom(vector<actor*>& scene, room& r, float depth, bool waterRoom)
+
+void game::makeRoom(vector<actor*>& scene, room& r, float depth, bool waterRoom)
 {
     modelManager& mm = modelManager::getInstance();
 
@@ -196,7 +180,7 @@ void makeRoom(vector<actor*>& scene, room& r, float depth, bool waterRoom)
 
 }
 
-room& analyzeNeighbors( int idx, utils::ImageRGB& img, glm::vec3 color)
+room& game::analyzeNeighbors( int idx, utils::ImageRGB& img, glm::vec3 color)
 {
     //Normal room
     room r;
@@ -207,35 +191,36 @@ room& analyzeNeighbors( int idx, utils::ImageRGB& img, glm::vec3 color)
     r.ceil = true;
     int nidx = idx-(img.w);
     if ( nidx < 0 || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                   color))
+                                           color))
     {
         r.murNord = true;
     }
     nidx = idx+(img.w);
     if ( nidx >= img.data.size() || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                   color)) 
+                                                          color)) 
     {
         r.murSud = true;
     }
     nidx = idx-1;
     if ( nidx < 0 || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                    color)) 
+                                           color)) 
     {
         r.murOuest = true;
     }
     nidx = idx+1;
     if ( nidx >= img.data.size() || utils::isColorEquals( glm::vec3( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b ),
-                                                   color)) 
+                                                          color)) 
     {
         r.murEst = true;
     }
     return r;
 }
 
-void loadMaze( const string &filename, vector<actor*>& scene, player* p)
+glm::vec2 game::loadMaze( const string &filename, vector<actor*>& scene, player* p)
 {
     utils::ImageRGB img;
     utils::load_ppm(img, filename);
+    int endPosX, endPosY;
     for( int i = 0;
          i < img.h;
          ++i)
@@ -246,7 +231,7 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
         {
             int idx = (img.w *i)+j;
             if ( utils::isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
-                                glm::vec3(255,255,255)))
+                                       glm::vec3(255,255,255)))
             {
                 //Normal room
                 room r = analyzeNeighbors( idx, img, glm::vec3(0,0,0));
@@ -256,7 +241,7 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
             }
 
             if( utils::isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
-                               glm::vec3(255,0,0)))
+                                      glm::vec3(255,0,0)))
             {
                 //Begining room
                 p->setPosition( glm::vec3( j+(0.5), 0.5, i+(0.5) ) );
@@ -289,10 +274,8 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
                 makeRoom(scene,r, 0.0f, false);
             }
 
-
-
             if ( utils::isColorEquals( glm::vec3( img.data[idx].r, img.data[idx].g, img.data[idx].b),
-                                glm::vec3(0,0,255)))
+                                       glm::vec3(0,0,255)))
             {
                 //WAter room
                 room r = analyzeNeighbors( idx, img, glm::vec3(0,0,0));
@@ -314,8 +297,21 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
             }
 
 
+            if ( utils::isColorEquals( glm::vec3( img.data[idx].r, img.data[idx].g, img.data[idx].b),
+                                       glm::vec3(0,255,0)))
+            {
+                //END ROOM
+                room r = analyzeNeighbors( idx, img, glm::vec3(0,0,0));
+                r.offsetX = j;
+                r.offsetY = i;
+                endPosX = j;
+                endPosY = i;
+                makeRoom( scene, r, 0.0f,false);
+            }
+
+
             if ( utils::isColorEquals( glm::vec3 ( img.data[idx].r, img.data[idx].g, img.data[idx].b),
-                                glm::vec3(255,126,0)))
+                                       glm::vec3(255,126,0)))
             {
                 //door
                 //NOTE(marc): we should check if door is valid or on image border
@@ -327,12 +323,12 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
                 int nidx = idx-1;
                 int nidx2 = idx+1;
                 if(  utils::isColorEquals( glm::vec3 ( img.data[nidx].r, img.data[nidx].g, img.data[nidx].b),
-                                    glm::vec3(0,0,0))
+                                           glm::vec3(0,0,0))
                      &&  utils::isColorEquals( glm::vec3 ( img.data[nidx2].r, img.data[nidx2].g, img.data[nidx2].b),
-                                        glm::vec3(0,0,0)))
+                                               glm::vec3(0,0,0)))
                 {
 //door along x axis
-                    cout << "door x axis" << endl;
+                    
                     modelManager& mm = modelManager::getInstance();
                     glm::vec3 position = glm::vec3(j, 0.0f, (i+0.5f)*1.0f);
                     glm::mat4 modelMatrix = glm::mat4();
@@ -343,8 +339,8 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
                 }
                 else
                 {
-                   //door along y axis
-                    cout << "door y axis" << endl;
+                    //door along y axis
+                   
                     modelManager& mm = modelManager::getInstance();
                     glm::mat4 modelMatrix = glm::mat4();
                     modelMatrix = glm::rotate( modelMatrix, (PI/2.0f), glm::vec3( 0.0f, 1.0f, 0.0f));         
@@ -357,22 +353,23 @@ void loadMaze( const string &filename, vector<actor*>& scene, player* p)
             }
         }
     }
+    return glm::vec2(endPosX, endPosY);
 }
 
-void drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader)
+void game::drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader)
 {
     //Render everything excpet water
     mainShader->use();
     for ( vector<actor*>::iterator it = scene.begin();
-    it != scene.end();
-    ++it)
+          it != scene.end();
+          ++it)
     {
         //TODO(marc) : make instancied rendering for walls ?
         if((*it)->getType() != "water")
         {
             glUniformMatrix4fv(glGetUniformLocation(mainShader->getProgram(), "model"),
                                1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
-            (*it)->getModel()->Draw(*mainShader);
+            (*it)->Draw(mainShader);
         }
     }
     //NOTE(marc): Besoin de render l'eau en dernier pour les problèmes de blending qui ne sont pas
@@ -390,7 +387,7 @@ void drawScene( vector<actor*>& scene, shader* mainShader, shader* waterShader)
             {
                 glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "model"),
                                    1, GL_FALSE, glm::value_ptr((*it)->getModelMatrix()));
-                (*it)->getModel()->Draw(*waterShader);       
+                (*it)->Draw(waterShader);       
             }
         
         }
@@ -406,22 +403,7 @@ bool isGLError()
     return false;
 }
 
-bool AABBtoAABB(const AABB& tBox1, const AABB& tBox2)
-{
-
-//Check if Box1's max is greater than Box2's min and Box1's min is less than Box2's max
-    return(tBox1.max.x > tBox2.min.x &&
-    tBox1.min.x < tBox2.max.x &&
-    tBox1.max.y > tBox2.min.y &&
-    tBox1.min.y < tBox2.max.y &&
-    tBox1.max.z > tBox2.min.z &&
-    tBox1.min.z < tBox2.max.z);
-
-//If not, it will return false
-
-}
-
-void checkCollision(vector<actor*>& scene, player* p, float deltaTime)
+void game::checkCollision(vector<actor*>& scene, player* p, float deltaTime)
 {
     for( vector<actor*>::iterator it = scene.begin();
          it != scene.end();
@@ -432,21 +414,20 @@ void checkCollision(vector<actor*>& scene, player* p, float deltaTime)
             AABB aabb = (*it)->getAABB();
             aabb.max.y += 1.0;
             aabb.min.y += -1.0;
-            if ( AABBtoAABB( aabb, p->getAABB()))
+            if ( utils::AABBtoAABB( aabb, p->getAABB()))
             {
                 (*it)->doCollision(p, deltaTime);
             }
         }
         else
         {
-            if ( AABBtoAABB( (*it)->getAABB(), p->getAABB()))
+            if ( utils::AABBtoAABB( (*it)->getAABB(), p->getAABB()))
             {
                 (*it)->doCollision(p, deltaTime);
             }
         }
     }
 }
-
 
 void game::loadAssets()
 {
@@ -471,7 +452,7 @@ void game::loadAssets()
         ("monster2", new Model( "../Assets/Models/Alien_Necromorph/Alien_Necromorph.obj" )));
 }
 
-void loadWorld( const std::string path, vector<actor*>& scene, player* p)
+glm::vec2 game::loadWorld( const std::string path, vector<actor*>& scene, player* p)
 {
     modelManager& manager = modelManager::getInstance();
     ifstream file(path);
@@ -483,7 +464,7 @@ void loadWorld( const std::string path, vector<actor*>& scene, player* p)
     {
         getline (file,line);
         getline (file, line);
-        loadMaze( line, scene, p );
+        glm::vec2 endPos = loadMaze( line, scene, p);
         getline(file, line);
         chestNb = std::stoi(line, nullptr);
         for ( int i = 0;
@@ -501,9 +482,9 @@ void loadWorld( const std::string path, vector<actor*>& scene, player* p)
             glm::mat4 modelMatrix = glm::mat4();
             
             modelMatrix = glm::translate( modelMatrix,
-                                                    glm::vec3( stof(elements[1], nullptr)+0.5,
-                                                               0.0,
-                                                               stof(elements[2], nullptr)+0.5));
+                                          glm::vec3( stof(elements[1], nullptr)+0.5,
+                                                     0.0,
+                                                     stof(elements[2], nullptr)+0.5));
             modelMatrix = glm::scale( modelMatrix, glm::vec3(0.1,0.1,0.1));
             chest* aChest;
             if (elements[4] == "gold")
@@ -528,29 +509,58 @@ void loadWorld( const std::string path, vector<actor*>& scene, player* p)
             {
                 elements.push_back(item);
             }
-            cout << elements[8] << endl;
             glm::mat4 modelMatrix = glm::mat4();
             modelMatrix = glm::translate( modelMatrix,
-                                                    glm::vec3( stof(elements[1], nullptr)+0.5,
-                                                               0.0,
-                                                               stof(elements[2], nullptr)+0.5));
+                                          glm::vec3( stof(elements[1], nullptr)+0.5,
+                                                     0.0,
+                                                     stof(elements[2], nullptr)+0.5));
             modelMatrix = glm::scale( modelMatrix, glm::vec3(0.1,0.1,0.1));
             monster* m;
-                m = new monster( manager.getModels()[elements[8]], modelMatrix,
-                              glm::vec3( stof(elements[1], nullptr)+0.5, 0.0f, stof(elements[2], nullptr)+0.5),
-                                 stoi(elements[5], nullptr), stof(elements[6], nullptr), stoi(elements[7], nullptr),2.0);
+            if ( elements[4] == "gold" )
+            {
+                m = new monster( manager.getModels()[elements[9]],
+                                 modelMatrix,
+                                 glm::vec3( stof(elements[1], nullptr)+0.5,
+                                            0.0f,
+                                            stof(elements[2], nullptr)+0.5),
+                                 stoi(elements[6], nullptr),
+                                 stof(elements[7], nullptr),
+                                 stoi(elements[8], nullptr),
+                                 2.0,
+                                 monster::Type::GOLD,
+                                 stoi(elements[5], nullptr)
+                                 );
+            }
+            else
+            {
+                m = new monster( manager.getModels()[elements[9]],
+                                 modelMatrix,
+                                 glm::vec3( stof(elements[1], nullptr)+0.5,
+                                            0.0f,
+                                            stof(elements[2], nullptr)+0.5),
+                                 stoi(elements[6], nullptr),
+                                 stof(elements[7], nullptr),
+                                 stoi(elements[8], nullptr),
+                                 2.0,
+                                 monster::Type::LIFE,
+                                 stoi(elements[5], nullptr)
+                                 );
+            }
             scene.push_back(m);
         }
         file.close();
+        return endPos;
     }
     else
     {
         cout << "file problem" << endl;
+        return glm::vec2(0.0);
     }
+    
 }
 
 
-void checkMonsterAggro( vector<actor*>& scene, player* p, float deltaTime )
+void game::checkMonsterAggro( vector<actor*>& scene, player* p, float deltaTime )
 {
     for ( vector<actor*>::iterator it = scene.begin();
           it != scene.end();
@@ -573,10 +583,15 @@ int game::mainLoop()
     player* p = new player();
     p->getController()->setMiscCallback(SDL_WINDOWEVENT_CLOSE, std::bind(&game::close, this));
     p->getController()->setKeyPressCallback(SDLK_ESCAPE, std::bind(&game::close, this));
-cout << "helo" << endl;
     loadAssets();
-    cout << "helo" << endl;
-    loadWorld( "../Assets/toLoad.txt", scene, p);
+    glm::vec2 endPos = loadWorld( "../Assets/toLoad.txt", scene, p);
+    AABB endAABB;
+    endAABB.min.x = endPos.x;
+    endAABB.max.x = endPos.x +1;
+    endAABB.min.z = endPos.y;
+    endAABB.max.z = endPos.y +1;
+    endAABB.min.y = 0;
+    endAABB.max.y = 1;
     //Load shaders
     shader* lightningShader = new shader("../Shaders/simpleLight" );
     lightningShader->init();
@@ -597,7 +612,7 @@ cout << "helo" << endl;
     //NOTE(marc) : rajouter un sens au texte pour pouvoir mettre la position
     //dans les coins a droite par exemple
     //Rajouter aussi une taille au texte (changement au moment du loadfont)
-    //peut etre pouvoir donner une font aussi, peut etre pas util pourn le moment
+    //peut etre pouvoir donner une font et une couleur aussi, peut etre pas util pourn le moment
     text* framerate_t = new text( "DEFAULT", glm::vec2(700.0, 0.0), 10, true);
     text* gold = new text( "DEFAULT", glm::vec2(0.0, 50.0), 50, false);
     text* keys = new text( "DEFAULT", glm::vec2(0.0, 100.0), 50, false);
@@ -685,11 +700,15 @@ cout << "helo" << endl;
 
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
     glClearDepth(1.0);
-    
-#if 1    
+
+    bool gameOver = false;
+    bool winGame = false;
+       
 // Main loop
     while(!endgame)
     {
+        if ( !gameOver && !winGame )
+        {
         current = SDL_GetTicks();
         deltaTime = (current - last)/1000;
         last = current;
@@ -697,12 +716,23 @@ cout << "helo" << endl;
         framerate_t->setText(std::to_string(framerate));
         p->getController()->processEvents();
         p->move(deltaTime);
-        life->setText(std::to_string(p->getLife()));
-        gold->setText(std::to_string(p->getGold()));
-        keys->setText(std::to_string(p->getKey()));
+
+        if ( utils::AABBtoAABB(endAABB, p->getAABB()))
+        {
+            winGame = true;
+        }
+
+        
+        life->setText("LIFE :" + std::to_string(p->getLife()));
+        gold->setText("GOLD :" + std::to_string(p->getGold()));
+        keys->setText("KEYS :" + std::to_string(p->getKey()));
 
         checkMonsterAggro( scene, p, deltaTime );
-        checkCollision( scene, p, deltaTime);       
+        checkCollision( scene, p, deltaTime);
+        if (p->getLife() <= 0 )
+        {
+            gameOver = true;
+        }
 
         glm::mat4 projection = glm::perspective(p->getCamera()->getZoom(),
                                                 (float)screenWidth/(float)screenHeight,
@@ -736,23 +766,22 @@ cout << "helo" << endl;
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         if(isGLError())
             cout << glGetError() << endl;       
-#if 1
 
-        //SET WATER SHADER UNIFROMS
+//SET WATER SHADER UNIFROMS
         waterShader->use();
-        // Transformation matrices                
+// Transformation matrices                
         glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "projection"),
                            1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(waterShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(view));
 
-        // Set the lighting uniforms
+// Set the lighting uniforms
         glUniform3f(glGetUniformLocation(waterShader->getProgram(), "viewPos"),
                     p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
         glUniform3f(glGetUniformLocation(waterShader->getProgram(), "lightPos"),
                     p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
 
-        // Point light 1
+// Point light 1
         glUniform3f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].position"),
                     p->getCamera()->getPosition().x,
                     p->getCamera()->getPosition().y,
@@ -770,19 +799,19 @@ cout << "helo" << endl;
         glUniform1f(glGetUniformLocation(waterShader->getProgram(), "pointLights[0].quadratic"),
                     1.8); //0.00005);  // 1.8)
 
-        //SET LIGHTNING SHADER UNIFORMS
+//SET LIGHTNING SHADER UNIFORMS
         lightningShader->use();
-        // Transformation matrices                
+// Transformation matrices                
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "projection"),
                            1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(view));
-        // Set the lighting uniforms
+// Set the lighting uniforms
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "viewPos"),
                     p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "lightPos"),
                     p->getCamera()->getPosition().x,p->getCamera()->getPosition().y, p->getCamera()->getPosition().z);
-        // Point light 1
+// Point light 1
         glUniform3f(glGetUniformLocation(lightningShader->getProgram(), "pointLights[0].position"),
                     p->getCamera()->getPosition().x,
                     p->getCamera()->getPosition().y,
@@ -804,9 +833,10 @@ cout << "helo" << endl;
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTex);
         glActiveTexture(GL_TEXTURE0 + --maxTex);       
         glUniform1i(glGetUniformLocation(lightningShader->getProgram(), "shadowMap"), maxTex);
-        glUniform1i(glGetUniformLocation(waterShader->getProgram(), "shadowMap"), maxTex);
         glBindTexture(GL_TEXTURE_2D, depthMapTex);          
 
+
+//RENDER WATER REFLECTION
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(rotView));
         glm::vec4 plane = glm::vec4( 0.0 , 1.0 , 0.0, 0.0 );
@@ -820,7 +850,7 @@ cout << "helo" << endl;
             glm::vec4( 0.0, 0.0, 0.0, 1.0));
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
                            1, GL_FALSE, glm::value_ptr(invert));
-        //RENDER WATER REFLECTION
+       
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, reflectionFBO);
         glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
@@ -832,8 +862,8 @@ cout << "helo" << endl;
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "invert"),
                            1, GL_FALSE, glm::value_ptr(invert));
 
-#if 1
-        //BLUR
+
+//BLUR REFLECTION
         GLboolean horizontal = true, first_iteration = true;
         GLuint amount = 20;
         GLuint _quadVBO, _quadVAO, _quadEBO;
@@ -852,13 +882,13 @@ cout << "helo" << endl;
             };
 
             GLfloat quadVertices[] = {
-                // Positions                                 // Texture Coords
+// Positions                                 // Texture Coords
                 -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
                 -1.0f, -1.0f, 0.0f,    0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
                 1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
                 1.0f, -1.0f, 0.0f,    0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
             };
-            // Setup plane VAO
+// Setup plane VAO
             glGenVertexArrays(1, &_quadVAO);
             glGenBuffers(1, &_quadVBO);
             glGenBuffers(1, &_quadEBO);
@@ -867,13 +897,13 @@ cout << "helo" << endl;
             glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _quadEBO);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-            // Position attribute
+// Position attribute
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
             glEnableVertexAttribArray(0);
-            // Color attribute
+// Color attribute
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
             glEnableVertexAttribArray(1);
-            // TexCoord attribute
+// TexCoord attribute
             glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
             glEnableVertexAttribArray(2);
 
@@ -887,9 +917,8 @@ cout << "helo" << endl;
                 first_iteration = false;
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
 
-#if 1
+
         lightningShader->use();
         glUniformMatrix4fv(glGetUniformLocation(lightningShader->getProgram(), "view"),
                            1, GL_FALSE, glm::value_ptr(view));
@@ -905,13 +934,13 @@ cout << "helo" << endl;
         glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
         lightningShader->use();
 
-        //RENDER SCENE
+//RENDER SCENE
         glViewport(0, 0, screenWidth, screenHeight);
         glBindFramebuffer( GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         drawScene(scene, lightningShader, waterShader);
 
-        //RENDER TEXT
+//RENDER TEXT
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
         textShader->use();
@@ -924,23 +953,23 @@ cout << "helo" << endl;
         keys->draw(*textShader);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-#endif
 
 #if 0
-        //DEBUG DISPLAY
+        //TODO(marc) : faire une fonction pour render un quad et éviter de dupliquer le code
+//DEBUG DISPLAY
         GLuint indices[] = {  // Note that we start from 0!
             0, 1, 3, // First Triangle
             1, 2, 3  // Second Triangle
         };
 
         GLfloat quadVertices[] = {
-            // Positions        // Texture Coords
+// Positions        // Texture Coords
             -1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
             -1.0f, 0.5f, 0.0f,    0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
             -0.5f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
             -0.5f, 0.5f, 0.0f,    0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
         };
-        // Setup plane VAO
+// Setup plane VAO
         glGenVertexArrays(1, &quadVAO);
         glGenBuffers(1, &quadVBO);
         glGenBuffers(1, &quadEBO);
@@ -949,13 +978,13 @@ cout << "helo" << endl;
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-        // Position attribute
+// Position attribute
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
         glEnableVertexAttribArray(0);
-        // Color attribute
+// Color attribute
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
         glEnableVertexAttribArray(1);
-        // TexCoord attribute
+// TexCoord attribute
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
         glEnableVertexAttribArray(2);
 
@@ -972,14 +1001,32 @@ cout << "helo" << endl;
         glBindVertexArray(0);
 #endif  
         
-#endif                
-        // Actualisation de la fenêtre
+        }
+        else
+        {
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_CULL_FACE);
+            p->getController()->processEvents();
+            if ( gameOver )
+            {
+                life->setText("YOU LOSE !! Press Esc to close");
+            }
+            if ( winGame )
+            {
+                life->setText("YOU WIN !! Press Esc to close");
+            }
+            glViewport(0, 0, screenWidth, screenHeight);
+            glBindFramebuffer( GL_FRAMEBUFFER, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            textShader->use();
+            glm::mat4 projection = glm::ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f);
+            glUniformMatrix4fv(glGetUniformLocation(textShader->getProgram(), "projection"),
+                               1, GL_FALSE, glm::value_ptr(projection));
+            life->draw(*textShader);
+        }
+// Actualisation de la fenêtre
         SDL_GL_SwapWindow(window);
     }
-#endif
-    // Deaalowing and cleaning app
-    delete lightningShader;
-    delete p;
 
     SDL_DestroyWindow(window);
     SDL_Quit();

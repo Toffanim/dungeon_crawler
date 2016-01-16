@@ -7,11 +7,20 @@
    ======================================================================== */
 #include "monster.h"
 
-monster::monster(Model* model, glm::mat4 modelMatrix, glm::vec3 position, int atk, float atkPerSec, int life, float aggroRadius)
+monster::monster(Model* model, glm::mat4 modelMatrix, glm::vec3 position, int atk, float atkPerSec, int life, float aggroRadius, Type lootType, int lootAmount)
         :actor(model, modelMatrix, "monster"), aggroRadius(aggroRadius), alive(true),
          position(position)
-        ,speed(3.0f), lastAttack( 0.0f ), atkPerSec( atkPerSec ), atk(atk), life( life )
+        ,speed(3.0f), lastAttack( 0.0f ), atkPerSec( atkPerSec ), atk(atk), life( life ),
+         lootAmount(lootAmount), lootType(lootType)
 {
+}
+
+void monster::Draw(shader* s)
+{
+    if (alive)
+    {
+        getModel()->Draw(*s);
+    }
 }
 
 void monster::doCollision( player* p, float deltaTime )
@@ -33,9 +42,17 @@ void monster::doCollision( player* p, float deltaTime )
         if ( life <= 0 )
         {
             alive = false;
-            cout << "dead" << endl;
+            //donner au joueur son loot
+            if ( lootType == Type::GOLD )
+            {
+                p->addGold(lootAmount);
+            }
+            else
+            {
+                p->addLife(lootAmount);
+            }
         }
-        //donner au joueur son loot
+ 
     }
 }
 
