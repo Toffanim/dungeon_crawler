@@ -1,6 +1,4 @@
 #!/bin/bash
 
 export LD_LIBRARY_PATH=/usr/lib64
-make all
-cd build/
-./dungeonGL
+make all && cd build/ && ./dungeonGL
